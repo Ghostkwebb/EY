@@ -9,13 +9,75 @@ from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
+from serpapi import GoogleSearch
+
+@st.cache_data 
+def fetch_real_benchmark(job_title, serp_key, llm_choice, groq_key):
+    # 1. Hardcoded Fallbacks (Safety Net)
+    fallbacks = {
+        "Software Engineer": 75000,
+        "Relationship Manager": 95000,
+        "Data Analyst": 60000
+    }
+    
+    if not serp_key:
+        return fallbacks.get(job_title, 50000), "No SerpAPI key. Using fallback."
+    
+    # 2. Scrape Google
+    params = {
+        "q": f"average monthly salary for {job_title} in India Glassdoor",
+        "hl": "en",
+        "gl": "in",
+        "api_key": serp_key
+    }
+    try:
+        search = GoogleSearch(params)
+        results = search.get_dict()
+        snippets = " ".join([res.get("snippet", "") for res in results.get("organic_results", [])[:3]])
+        
+        if not snippets: 
+            return fallbacks.get(job_title, 50000), "No Google results found. Using fallback."
+        
+        # 3. Ask LLM (Better Prompt for India)
+        if llm_choice == "Groq (Cloud)":
+            llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=groq_key, temperature=0)
+        else:
+            llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio", model="gemma-4-e4b-it", temperature=0)
+            
+        prompt = f"Search results: '{snippets}'. Extract average MONTHLY salary in INR. If it says 'Lakhs' or 'LPA' (like 6 Lakhs), assume 600000 and divide by 12. Return ONLY a single integer number. No commas."
+        ans = llm.invoke(prompt)
+        
+        match = re.search(r'\d+', ans.content.replace(',', ''))
+        val = int(match.group()) if match else 0
+        
+        if val > 300000: val = val // 12
+        
+        # 4. Sanity Check (If LLM gave garbage like 0 or 6)
+        if val < 20000 or val > 200000:
+            return fallbacks.get(job_title, 50000), f"LLM returned crazy value ({val}). Snippets: {snippets[:100]}..."
+            
+        return val, f"Source: Google Snippets -> {snippets[:200]}..."
+    except Exception as e:
+        return fallbacks.get(job_title, 50000), f"Error: {e}"
+
+class SalaryData(BaseModel):
+    Client_ID: str = Field(description="Unique client identifier, e.g., C-1001")
+    Name: str = Field(description="Name of the employee")
+    Job_Title: str = Field(description="Employee's job title or role")
+    Month_Year: str = Field(description="Month and year of the slip, e.g., 'Jan 2019'")
+    Gross_Salary: float = Field(description="The gross salary amount as a number")
 
 load_dotenv()
 st.set_page_config(page_title="Salary Benchmark Dashboard", layout="wide")
 
 st.title("FinCrime: Salary Driver Dashboard (MVP)")
 
-# --- 1. File Upload ---
+# --- 1. Settings & File Upload ---
+st.sidebar.header("Settings")
+llm_choice = st.sidebar.radio("Select LLM Mode:", ["LM Studio (Local)", "Groq (Cloud)"])
+api_key = os.getenv("GROQ_API_KEY") if llm_choice == "Groq (Cloud)" else "lm-studio"
+
 st.sidebar.header("Upload Salary Slips")
 uploaded_files = st.sidebar.file_uploader(
     "Upload slips (PDF, CSV, Excel)", 
@@ -23,38 +85,56 @@ uploaded_files = st.sidebar.file_uploader(
     accept_multiple_files=True
 )
 
-# --- 2. Parse Logic ---
-def parse_pdf(file):
+# --- 2. Smart Hybrid Parse Logic ---
+def parse_pdf(file, llm_choice, api_key):
     text = ""
     with pdfplumber.open(file) as pdf:
         for page in pdf.pages:
-            text += page.extract_text() + "\n"
-    
-    # MVP regex for fixed format
+            text += (page.extract_text() or "") + "\n"
+            
+    # 1. FAST PATH: Try Regex first (0.01 seconds)
     try:
         client_id = re.search(r"Client ID:\s*(.+)", text).group(1).strip()
-        name = re.search(r"Name:\s*(.+)", text).group(1).strip() # NEW
+        name = re.search(r"Name:\s*(.+)", text).group(1).strip() 
         month_year = re.search(r"Month/Year:\s*(.+)", text).group(1).strip()
         job_title = re.search(r"Job Title:\s*(.+)", text).group(1).strip()
         gross = float(re.search(r"Gross Salary:\s*INR\s*(\d+)", text).group(1))
         
         return {
-            "Client_ID": client_id, 
-            "Name": name, # NEW
-            "Job_Title": job_title, 
-            "Month_Year": month_year, 
+            "Client_ID": client_id, "Name": name, 
+            "Job_Title": job_title, "Month_Year": month_year, 
             "Gross_Salary": gross
         }
     except AttributeError:
-        return None # Fails if format unknown
+        # 2. SMART PATH: Regex failed (weird layout). Use LLM (2-5 seconds).
+        if llm_choice == "Groq (Cloud)":
+            llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=api_key, temperature=0)
+        else:
+            llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="gemma-4-e4b-it", temperature=0)
+
+        try:
+            structured_llm = llm.with_structured_output(SalaryData)
+            result = structured_llm.invoke(f"Extract salary details from this text. Return exact format.\n\nText: {text}")
+            return result.model_dump()
+        except Exception as e:
+            # Both failed. 
+            st.sidebar.error(f"Failed to parse {file.name}: {e}")
+            return None
 
 # --- 3. Process Files ---
 all_data = []
 
 if uploaded_files:
-    for file in uploaded_files:
+    total = len(uploaded_files)
+    progress_bar = st.progress(0, text="Starting extraction...")
+    
+    for i, file in enumerate(uploaded_files):
+        # Update progress bar
+        pct = (i) / total
+        progress_bar.progress(pct, text=f"Parsing {file.name} ({i+1}/{total})...")
+        
         if file.name.endswith(".pdf"):
-            data = parse_pdf(file)
+            data = parse_pdf(file, llm_choice, api_key)
             if data: all_data.append(data)
         elif file.name.endswith(".csv"):
             df_csv = pd.read_csv(file)
@@ -62,6 +142,8 @@ if uploaded_files:
         elif file.name.endswith(".xlsx"):
             df_excel = pd.read_excel(file)
             all_data.extend(df_excel.to_dict('records'))
+            
+    progress_bar.progress(1.0, text="Extraction complete!")
 
 # --- 4. Display & Analyze ---
 if all_data:
@@ -144,23 +226,28 @@ if all_data:
     # --- 6. Plot Salary Trend (With Gaps & Benchmarks) ---
     st.subheader("Salary Trend & Benchmarks")
     
-    bench_path = "mock_data/benchmark.csv"
-    bench_df = pd.read_csv(bench_path) if os.path.exists(bench_path) else pd.DataFrame()
-
     fig = px.line(title="Salary History vs Benchmarks")
+    serp_key = os.getenv("SERPAPI_KEY")
 
-    # Use the filtered df's clients, but grab color from color_map
+    # Use the filtered df's clients, grabbing color from color_map (created in Phase 4)
     for client in df['Client_ID'].unique():
-        client_color = color_map[client] 
+        client_color = color_map[client] # Stable color
+        
         c_df = df[df['Client_ID'] == client].copy()
-
         job = c_df['Job_Title'].iloc[0] if 'Job_Title' in c_df.columns else "Unknown"
         
+        # --- Live Web Benchmark via SerpAPI ---
         bench_val = 0
-        if not bench_df.empty and job in bench_df['Job_Title'].values:
-            match = bench_df[bench_df['Job_Title'] == job]
-            bench_val = (match['Min_Salary'].values[0] + match['Max_Salary'].values[0]) / 2
+        bench_source = ""
+        if job != "Unknown":
+            with st.spinner(f"Fetching real benchmark for '{job}'..."):
+                bench_val, bench_source = fetch_real_benchmark(job, serp_key, llm_choice, api_key)
+                st.info(f"**Benchmark for {job}:** INR {bench_val} | {bench_source}")
+                
+        if bench_val == 0:
+            st.warning(f"Could not fetch real benchmark for {job}. Check SerpApi Key. Using 0.")
             
+        # Create ideal 60-month timeline (Jan 2019 to Dec 2023)
         ideal_dates = pd.date_range(start='2019-01-01', end='2023-12-01', freq='MS')
         merged = pd.DataFrame({'Date_Parsed': ideal_dates})
         merged = pd.merge(merged, c_df[['Date_Parsed', 'Gross_Salary']], on='Date_Parsed', how='left')
@@ -184,40 +271,24 @@ if all_data:
                 y=missing['Bench_Val'],
                 mode='markers',
                 marker=dict(color=client_color, size=12, symbol='x'),
-                name=f'{client} Benchmark Estimate'
+                name=f'{client} Live Benchmark Estimate'
             )
 
     st.plotly_chart(fig, use_container_width=True)
 
     # --- 7. LLM Chatbot ---
     st.subheader("Ask Data (LLM)")
-    
-    # NEW: Toggle for local vs cloud
-    llm_choice = st.radio("Select LLM Privacy Mode:", ["LM Studio (Local/Private)", "Groq (Cloud/Fast)"], horizontal=True)
     user_query = st.text_input("Ask question about uploaded salary data (e.g., 'What is max salary for C-1001?')")
 
     if user_query:
-        llm = None
-        error_msg = None
-        
-        if llm_choice == "Groq (Cloud/Fast)":
-            api_key = os.getenv("GROQ_API_KEY")
-            if not api_key:
-                error_msg = "Missing GROQ_API_KEY in .env file"
-            else:
-                llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=api_key)
+        if llm_choice == "Groq (Cloud)" and not api_key:
+            st.error("Missing GROQ_API_KEY in .env file")
         else:
-            # LM Studio setup. Point to localhost port 1234.
-            llm = ChatOpenAI(
-                base_url="http://localhost:1234/v1",
-                api_key="lm-studio", # LangChain needs dummy key
-                model="gemma-4-e4b-it",
-                temperature=0
-            )
-
-        if error_msg:
-            st.error(error_msg)
-        elif llm:
+            if llm_choice == "Groq (Cloud)":
+                llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=api_key)
+            else:
+                llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="gemma-4-e4b-it", temperature=0)
+                
             agent = create_pandas_dataframe_agent(llm, df, verbose=True, allow_dangerous_code=True)
             try:
                 with st.spinner(f"Thinking using {llm_choice}..."):
