@@ -66,6 +66,9 @@ def parse_pdf(file, llm_choice, api_key):
 # --- CSS ---
 st.markdown("""
 <style>
+    div[data-testid="stChatMessage"] { background-color: #121212 !important; border: 2px solid #333 !important; padding: 10px !important; margin-bottom: 10px !important; }
+    div[data-testid="stChatMessage"] * { color: #FFFFFF !important; }
+    
     .stApp, .main, .stAppViewContainer { background-color: #0A0A0A !important; font-family: 'Courier New', monospace !important; }
     h1, h2, h3, h4, p, span, label, div, li, summary, input { color: #FFFFFF !important; }
     h1, h2, h3 { border-bottom: 4px solid #FFFFFF !important; text-transform: uppercase; font-weight: 900 !important; margin-bottom: 20px !important; }
@@ -123,7 +126,14 @@ st.markdown("""
         background-color: #000000 !important; border: 2px solid #00FFAA !important; border-radius: 50px !important; padding: 10px 25px !important; box-shadow: 0px 0px 15px rgba(0, 255, 170, 0.4) !important;
     }
     [data-testid="stPopover"] > button p, [data-testid="stPopover"] > button span, [data-testid="stPopover"] > button div { color: #00FFAA !important; font-weight: 900 !important; }
-    div[data-testid="stPopoverBody"] { background-color: #0A0A0A !important; border: 4px solid #00FFAA !important; box-shadow: 8px 8px 0px rgba(0, 255, 170, 0.5) !important; border-radius: 0px !important; width: 350px !important; }
+    div[data-testid="stPopoverBody"] {
+        background-color: #0A0A0A !important; border: 4px solid #00FFAA !important;
+        box-shadow: 8px 8px 0px rgba(0, 255, 170, 0.5) !important; border-radius: 0px !important; 
+        width: 400px !important; height: 500px !important; overflow-y: auto !important;
+    }
+    div[data-testid="stPopoverBody"] [data-testid="stChatInput"] {
+        position: sticky; bottom: 0; background-color: #0A0A0A !important; z-index: 100;
+    }
     
     header, [data-testid="stSidebar"] { display: none !important; }
 </style>
@@ -252,14 +262,49 @@ else:
     st.info("System Standby. Open configuration above and upload data.")
 
 # --- TERMINAL AI WIDGET ---
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = [{"role": "assistant", "content": "FINCRIME AGENT ONLINE. Awaiting command."}]
+
 with st.popover("💬 TERMINAL AI", use_container_width=False):
-    st.write("### FINCRIME AGENT")
-    prompt = st.chat_input("Query data...")
+    # 1. Draw History First
+    for msg in st.session_state.chat_history:
+        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+
+    # 2. Input at bottom
+    prompt = st.chat_input("Query data (e.g., 'Hi' or 'Max salary?')...")
+    
     if prompt:
-        if not all_data: st.error("Upload data first.")
-        elif llm_choice == "Groq (Cloud)" and not api_key: st.error("Missing API Key.")
-        else:
-            with st.spinner("Processing..."):
-                llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=api_key) if llm_choice == "Groq (Cloud)" else ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="gemma-4-e4b-it", temperature=0)
-                try: st.success(create_pandas_dataframe_agent(llm, df, verbose=True, allow_dangerous_code=True).invoke(prompt)["output"])
-                except Exception as e: st.error(f"Error: {e}")
+        # Draw user prompt immediately
+        with st.chat_message("user"): st.markdown(prompt)
+        st.session_state.chat_history.append({"role": "user", "content": prompt})
+        
+        with st.chat_message("assistant"):
+            if not all_data: 
+                out = "SYSTEM HALT: Upload data first."
+                st.error(out)
+                st.session_state.chat_history.append({"role": "assistant", "content": out})
+            elif llm_choice == "Groq (Cloud)" and not api_key: 
+                out = "SYSTEM HALT: Missing API Key."
+                st.error(out)
+                st.session_state.chat_history.append({"role": "assistant", "content": out})
+            else:
+                with st.spinner("Processing..."):
+                    llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=api_key) if llm_choice == "Groq (Cloud)" else ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="gemma-4-e4b-it", temperature=0)
+                    
+                    try:
+                        agent = create_pandas_dataframe_agent(llm, df, verbose=True, allow_dangerous_code=True)
+                        # Force ReAct agent to behave for greetings
+                        safe_prompt = prompt + "\n\n(If this is a simple greeting, reply exactly with 'Final Answer: Hello! How can I help you?')"
+                        out = agent.invoke(safe_prompt)["output"]
+                        st.markdown(out)
+                        st.session_state.chat_history.append({"role": "assistant", "content": out})
+                    
+                    except Exception as e:
+                        err_str = str(e)
+                        # Catch the ReAct parsing failure and extract the raw greeting
+                        if "Could not parse LLM output:" in err_str:
+                            out = err_str.split("Could not parse LLM output:")[1].strip().replace("`", "")
+                            st.markdown(out)
+                            st.session_state.chat_history.append({"role": "assistant", "content": out})
+                        else:
+                            st.error(f"Error: {err_str}")
