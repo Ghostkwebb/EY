@@ -27,21 +27,47 @@ class SalaryData(BaseModel):
 def fetch_real_benchmark(job_title, serp_key, llm_choice, groq_key):
     fallbacks = {"Software Engineer": 75000, "Relationship Manager": 95000, "Data Analyst": 60000}
     if not serp_key: return fallbacks.get(job_title, 50000), "No SerpAPI key."
-    params = {"q": f"average monthly salary for {job_title} in India Glassdoor", "hl": "en", "gl": "in", "api_key": serp_key}
+    
+    params = {"q": f"average salary for {job_title} in India Glassdoor AmbitionBox", "hl": "en", "gl": "in", "api_key": serp_key}
     try:
         search = GoogleSearch(params)
         results = search.get_dict()
         snippets = " ".join([res.get("snippet", "") for res in results.get("organic_results", [])[:3]])
+        
         if not snippets: return fallbacks.get(job_title, 50000), "No Google results."
-        if llm_choice == "Groq (Cloud)": llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=groq_key, temperature=0)
-        else: llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio", model="gemma-4-e4b-it", temperature=0)
-        prompt = f"Search results: '{snippets}'. Find average salary. If yearly (LPA/Lakhs), calculate monthly value in INR (multiply by 100000, divide by 12). Reply with ONLY the final monthly integer. No text, no commas. Example: 75000"
-        ans = llm.invoke(prompt)
-        match = re.search(r'\d+', ans.content.replace(',', ''))
-        val = int(match.group()) if match else 0
-        if val > 300000: val = val // 12
-        if val < 20000 or val > 200000: return fallbacks.get(job_title, 50000), f"LLM error ({val})."
-        return val, f"Google -> {snippets[:100]}..."
+        
+        yearly_val = 0
+        
+        # 1. SMART PYTHON REGEX (Catches 90% of Indian Salary Formats instantly)
+        # Looks for "₹6.5 Lakhs", "12 LPA", "5 Lakh" etc.
+        lakh_match = re.search(r'(?:₹|Rs\.?)?\s*([\d\.]+)\s*(?:Lakhs?|LPA)', snippets, re.IGNORECASE)
+        
+        if lakh_match:
+            yearly_val = int(float(lakh_match.group(1)) * 100000)
+        else:
+            # 2. LLM FALLBACK (If snippet uses weird formatting)
+            if llm_choice == "Groq (Cloud)": llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=groq_key, temperature=0)
+            else: llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio", model="gemma-4-e4b-it", temperature=0)
+                
+            prompt = f"Snippets: '{snippets}'. Extract the average YEARLY salary. Return ONLY the raw integer. If it says '6 Lakhs', output 600000."
+            ans = llm.invoke(prompt).content
+            
+            match = re.search(r'\d+', ans.replace(',', ''))
+            if match: yearly_val = int(match.group())
+
+        # 3. MATH & MULTIPLIER
+        if yearly_val > 0:
+            monthly_base = yearly_val // 12
+            adjusted_val = int(monthly_base * 1.8) # 1.8x EY Premium Multiplier
+        else:
+            adjusted_val = fallbacks.get(job_title, 50000)
+            
+        # 4. STRICT SANITY CHECK
+        if adjusted_val < 30000 or adjusted_val > 500000: 
+            return fallbacks.get(job_title, 50000), f"Safe Fallback used. Extracted weird value: {yearly_val}/yr."
+            
+        return adjusted_val, f"Scraped Google -> {snippets[:100]}..."
+        
     except Exception as e:
         return fallbacks.get(job_title, 50000), f"Error: {e}"
 
@@ -121,21 +147,29 @@ st.markdown("""
     }
     
     /* Terminal AI */
-    [data-testid="stPopover"] { position: fixed !important; bottom: 30px !important; right: 30px !important; z-index: 99999 !important; width: fit-content !important; }
-    [data-testid="stPopover"] > button { 
-        background-color: #000000 !important; border: 2px solid #00FFAA !important; border-radius: 50px !important; padding: 10px 25px !important; box-shadow: 0px 0px 15px rgba(0, 255, 170, 0.4) !important;
+    div[data-testid="stPopover"] { 
+        position: fixed !important; bottom: 30px !important; right: 30px !important; 
+        z-index: 99999 !important; 
+        width: fit-content !important; /* Kills the long bar */
+        display: flex !important; justify-content: flex-end !important;
     }
-    [data-testid="stPopover"] > button p, [data-testid="stPopover"] > button span, [data-testid="stPopover"] > button div { color: #00FFAA !important; font-weight: 900 !important; }
+    div[data-testid="stPopover"] > button { 
+        background-color: #0A0A0A !important; color: #00FFAA !important; 
+        border: 2px solid #00FFAA !important; border-radius: 50px !important; 
+        padding: 10px 25px !important; font-size: 16px !important; 
+        box-shadow: 0px 0px 15px rgba(0, 255, 170, 0.3) !important; 
+        width: fit-content !important;
+    }
+    div[data-testid="stPopover"] > button * { color: #00FFAA !important; font-weight: bold !important; }
+    
+    /* 8. Inside AI Popover (No position hacks) */
     div[data-testid="stPopoverBody"] {
         background-color: #0A0A0A !important; border: 4px solid #00FFAA !important;
         box-shadow: 8px 8px 0px rgba(0, 255, 170, 0.5) !important; border-radius: 0px !important; 
-        width: 400px !important; height: 500px !important; overflow-y: auto !important;
+        width: 380px !important; padding: 10px !important;
     }
-    div[data-testid="stPopoverBody"] [data-testid="stChatInput"] {
-        position: sticky; bottom: 0; background-color: #0A0A0A !important; z-index: 100;
-    }
-    
-    header, [data-testid="stSidebar"] { display: none !important; }
+    div[data-testid="stChatInput"] { border: 2px solid #333 !important; border-radius: 0px !important; }
+    div[data-testid="stChatMessage"] { background-color: #121212 !important; border: 1px solid #333 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -202,35 +236,30 @@ if all_data:
             c_df = plot_df[plot_df['Client_ID'] == client].copy()
             job = c_df['Job_Title'].iloc[0] if 'Job_Title' in c_df.columns else "Unknown"
             
-            bench_val = 0
+            # 1. Fetch External Industry Context (For Text Box)
             if job != "Unknown":
                 with st.spinner(f"Scraping Web for '{job}'..."):
                     bench_val, src = fetch_real_benchmark(job, serp_key, llm_choice, api_key)
-                    st.info(f"**{job} Benchmark:** INR {bench_val} | {src}")
+                    st.info(f"**{job} Industry Average:** INR {bench_val} | {src}")
                     
             merged = pd.merge(pd.DataFrame({'Date_Parsed': pd.date_range('2019-01-01', '2023-12-01', freq='MS')}), c_df[['Date_Parsed', 'Gross_Salary']], on='Date_Parsed', how='left')
             
-            # Line + Benchmarks
+            # 2. Plot Actual Line
             fig_trend.add_scatter(x=merged['Date_Parsed'], y=merged['Gross_Salary'], mode='lines+markers', name=f'{client} Actual', line=dict(color=color_map[client]), connectgaps=False)
+            
+            # 3. SMART FIX: Interpolate missing values mathematically based on client's own history
             missing = merged[merged['Gross_Salary'].isna()].copy()
-            if not missing.empty and bench_val > 0:
-                missing['Bench_Val'] = bench_val
-                fig_trend.add_scatter(x=missing['Date_Parsed'], y=missing['Bench_Val'], mode='markers', marker=dict(color=color_map[client], size=12, symbol='x'), name=f'{client} Estimate')
+            if not missing.empty:
+                # Interpolate draws a straight line between the known months
+                merged['Interpolated'] = merged['Gross_Salary'].interpolate(method='linear', limit_direction='both')
+                missing['Expected_Salary'] = merged.loc[missing.index, 'Interpolated']
+                
+                fig_trend.add_scatter(x=missing['Date_Parsed'], y=missing['Expected_Salary'], mode='markers', marker=dict(color=color_map[client], size=14, symbol='x'), name=f'{client} Missing (Interpolated)')
 
         fig_trend.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="white"), hovermode="x unified")
         fig_trend.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#333333')
         fig_trend.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#333333')
         st.plotly_chart(fig_trend, use_container_width=True)
-
-        # NEW GRAPH: Volatility
-        st.subheader("VOLATILITY INDEX (MoM % CHANGE)")
-        fig_mom = px.bar(plot_calc_df, x="Date_Parsed", y="MoM_Change_%", color="Client_ID", color_discrete_map=color_map, barmode="group")
-        fig_mom.add_hline(y=10.0, line_dash="dash", line_color="#FF3333", annotation_text="Fraud Threshold (+10%)")
-        fig_mom.add_hline(y=-10.0, line_dash="dash", line_color="#FF3333", annotation_text="Fraud Threshold (-10%)")
-        fig_mom.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="white"))
-        fig_mom.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#333333')
-        fig_mom.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#333333')
-        st.plotly_chart(fig_mom, use_container_width=True)
 
     # TAB 2: DATA AUDIT
     with tab_data:
@@ -266,45 +295,43 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = [{"role": "assistant", "content": "FINCRIME AGENT ONLINE. Awaiting command."}]
 
 with st.popover("💬 TERMINAL AI", use_container_width=False):
-    # 1. Draw History First
-    for msg in st.session_state.chat_history:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+    # NATIVE SCROLL BOX: Pushes input to bottom without CSS hacks
+    chat_container = st.container(height=400)
+    
+    with chat_container:
+        for msg in st.session_state.chat_history:
+            with st.chat_message(msg["role"]): 
+                st.markdown(msg["content"])
 
-    # 2. Input at bottom
     prompt = st.chat_input("Query data (e.g., 'Hi' or 'Max salary?')...")
     
     if prompt:
-        # Draw user prompt immediately
-        with st.chat_message("user"): st.markdown(prompt)
         st.session_state.chat_history.append({"role": "user", "content": prompt})
+        with chat_container:
+            with st.chat_message("user"): st.markdown(prompt)
         
-        with st.chat_message("assistant"):
-            if not all_data: 
-                out = "SYSTEM HALT: Upload data first."
-                st.error(out)
-                st.session_state.chat_history.append({"role": "assistant", "content": out})
-            elif llm_choice == "Groq (Cloud)" and not api_key: 
-                out = "SYSTEM HALT: Missing API Key."
-                st.error(out)
-                st.session_state.chat_history.append({"role": "assistant", "content": out})
-            else:
-                with st.spinner("Processing..."):
-                    llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=api_key) if llm_choice == "Groq (Cloud)" else ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="gemma-4-e4b-it", temperature=0)
-                    
-                    try:
-                        agent = create_pandas_dataframe_agent(llm, df, verbose=True, allow_dangerous_code=True)
-                        # Force ReAct agent to behave for greetings
-                        safe_prompt = prompt + "\n\n(If this is a simple greeting, reply exactly with 'Final Answer: Hello! How can I help you?')"
-                        out = agent.invoke(safe_prompt)["output"]
-                        st.markdown(out)
-                        st.session_state.chat_history.append({"role": "assistant", "content": out})
-                    
-                    except Exception as e:
-                        err_str = str(e)
-                        # Catch the ReAct parsing failure and extract the raw greeting
-                        if "Could not parse LLM output:" in err_str:
-                            out = err_str.split("Could not parse LLM output:")[1].strip().replace("`", "")
+        with chat_container:
+            with st.chat_message("assistant"):
+                if not all_data: 
+                    st.error("SYSTEM HALT: Upload data first.")
+                elif llm_choice == "Groq (Cloud)" and not api_key: 
+                    st.error("SYSTEM HALT: Missing API Key.")
+                else:
+                    with st.spinner("Processing..."):
+                        llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=api_key) if llm_choice == "Groq (Cloud)" else ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="gemma-4-e4b-it", temperature=0)
+                        try:
+                            agent = create_pandas_dataframe_agent(llm, [df, anomalies], verbose=True, allow_dangerous_code=True, number_of_head_rows=3)
+                            safe_prompt = f"Context: df1 is raw data, df2 is fraud alerts.\nUser: {prompt}\n\n(If greeting, reply exactly 'Final Answer: Hello! How can I assist you?')"
+                            out = agent.invoke(safe_prompt)["output"]
                             st.markdown(out)
                             st.session_state.chat_history.append({"role": "assistant", "content": out})
-                        else:
-                            st.error(f"Error: {err_str}")
+                        except Exception as e:
+                            err_str = str(e)
+                            if "Could not parse LLM output:" in err_str:
+                                out = err_str.split("Could not parse LLM output:")[1].strip().replace("`", "")
+                                st.markdown(out)
+                                st.session_state.chat_history.append({"role": "assistant", "content": out})
+                            elif "413" in err_str or "rate_limit_exceeded" in err_str:
+                                st.error("GROQ LIMIT HIT (6000 TPM). Wait 60s.")
+                            else:
+                                st.error(f"Error: {err_str}")
