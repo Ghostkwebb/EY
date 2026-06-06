@@ -28,26 +28,25 @@ clients = [
 start_date = datetime(2019, 1, 1)
 all_records = []
 
-# 4. Generate 60 months data
+# 4. Generate 60 months data with HNWI Volatile Patterns (No staircase, spiky bonuses, no fraud logic)
 for client in clients:
-    current_salary = client["Base_Salary"]
+    base_salary = client["Base_Salary"]
     client_records = []
     
     for i in range(60):
         current_date = start_date + relativedelta(months=i)
         
-        # Fraud Logic for C-1003
-        if client["Client_ID"] == "C-1003":
-            if i == 14: current_salary = 60000  # 20% jump (Fake bonus/invoice)
-            elif i == 15: current_salary = 50000 # Drop back
-            elif i == 42: current_salary = 65000 # 30% jump
-            elif i == 44: current_salary = 55000 # Drop back
-            elif i > 0 and i % 12 == 0:
-                current_salary = int(current_salary * 1.05)
-        # Normal Logic for others
-        else:
-            if i > 0 and i % 12 == 0:
-                current_salary = int(current_salary * 1.05)
+        # Base salary with ±2% minor monthly variation
+        import random
+        current_salary = int(base_salary * (1 + random.uniform(-0.02, 0.02)))
+        
+        # Quarterly Performance Payout (Every 3 months, spike of +15% to +30%)
+        if (i + 1) % 3 == 0:
+            current_salary += int(base_salary * random.uniform(0.15, 0.30))
+            
+        # Annual Stock Vest / Year-end Bonus (Every 12 months, massive spike of +40% to +75%)
+        if (i + 1) % 12 == 0:
+            current_salary += int(base_salary * random.uniform(0.40, 0.75))
             
         tax = int(current_salary * 0.15)
         net = current_salary - tax

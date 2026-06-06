@@ -174,13 +174,22 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- UI START ---
-st.title("FINCRIME: SALARY DRIVER DASHBOARD")
+st.title("SALARY DRIVER DASHBOARD")
 
 with st.expander("⚙️ SYSTEM CONFIGURATION & DATA INGESTION", expanded=True):
     col1, col2 = st.columns([1, 2])
     with col1:
-        llm_choice = st.radio("Select LLM:", ["LM Studio (Local)", "Groq (Cloud)"])
+        # Check URL for hidden developer switch (?dev=true)
+        is_dev = st.query_params.get("dev") == "true"
+        
+        if is_dev:
+            llm_choice = st.radio("Select LLM:", ["LM Studio (Local)", "Groq (Cloud)"], index=1, key="dev_llm_selector")
+        else:
+            llm_choice = "Groq (Cloud)" # Silent default for RM
+            st.info("System Engine: Secured Cloud") # Simple clean placeholder
+            
         api_key = os.getenv("GROQ_API_KEY") if llm_choice == "Groq (Cloud)" else "lm-studio"
+    
     with col2:
         uploaded_files = st.file_uploader("Upload Slips (PDF, CSV, Excel)", type=["pdf", "csv", "xlsx"], accept_multiple_files=True)
 
@@ -208,21 +217,22 @@ if all_data:
     anomalies = calc_df[calc_df['MoM_Change_%'].abs() > 10.0]
     
     st.write("---")
-    k1, k2, k3 = st.columns(3)
+    k1, k2 = st.columns(2) # Changed to 2 columns
     k1.metric("TOTAL CLIENTS", df['Client_ID'].nunique())
     k2.metric("PROCESSED SLIPS", len(df))
-    k3.metric("FINCRIME ALERTS", len(anomalies))
     st.write("---")
 
     all_client_ids = df['Client_ID'].unique()
-    selected_client = st.selectbox("Isolate Client Data:", ["All Clients"] + list(all_client_ids))
     
-    # Filter dataframes for UI
-    plot_df = df if selected_client == "All Clients" else df[df['Client_ID'] == selected_client]
-    plot_calc_df = calc_df if selected_client == "All Clients" else calc_df[calc_df['Client_ID'] == selected_client]
+    # Force single client selection. No "All Clients" option.
+    selected_client = st.selectbox("Select Client to Analyze:", list(all_client_ids))
+    
+    # Filter dataframes to selected client strictly
+    plot_df = df[df['Client_ID'] == selected_client]
+    plot_calc_df = calc_df[calc_df['Client_ID'] == selected_client]
 
     # --- TABS IMPLEMENTATION ---
-    tab_dash, tab_data, tab_fraud = st.tabs(["📊 DASHBOARD & TRENDS", "🗄️ DATA AUDIT", "⚠️ FRAUD ALERTS"])
+    tab_dash, tab_data = st.tabs(["📊 DASHBOARD & TRENDS", "🗄️ DATA AUDIT"])
 
     # TAB 1: DASHBOARD
     with tab_dash:
@@ -277,16 +287,6 @@ if all_data:
                 for d in missing_dates: all_missing.append({"Client_ID": client, "Date": d.strftime('%b %Y')})
         if all_missing: st.download_button("EXPORT MISSING LOG", data=pd.DataFrame(all_missing).to_csv(index=False).encode('utf-8'), file_name="missing.csv")
 
-    # TAB 3: FRAUD ALERTS
-    with tab_fraud:
-        st.subheader("⚠️ AML / FRAUD ALERTS")
-        tab_anomalies = plot_calc_df[plot_calc_df['MoM_Change_%'].abs() > 10.0]
-        if not tab_anomalies.empty:
-            st.error(f"ALERT: Found {len(tab_anomalies)} extreme salary shifts for selected view.")
-            st.dataframe(tab_anomalies[['Client_ID', 'Month_Year', 'Gross_Salary', 'MoM_Change_%']].style.format({'MoM_Change_%': '{:.2f}%'}), use_container_width=True)
-            st.download_button("EXPORT FRAUD REPORT", data=tab_anomalies.to_csv(index=False).encode('utf-8'), file_name="fincrime_alerts.csv")
-        else: st.success("SYSTEM CLEAR: No variance detected for selected view.")
-
 else:
     st.info("System Standby. Open configuration above and upload data.")
 
@@ -320,7 +320,7 @@ with st.popover("💬 TERMINAL AI", use_container_width=False):
                     with st.spinner("Processing..."):
                         llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=api_key) if llm_choice == "Groq (Cloud)" else ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="gemma-4-e4b-it", temperature=0)
                         try:
-                            agent = create_pandas_dataframe_agent(llm, [df, anomalies], verbose=True, allow_dangerous_code=True, number_of_head_rows=3)
+                            agent = create_pandas_dataframe_agent(llm, df, verbose=True, allow_dangerous_code=True, number_of_head_rows=3)
                             safe_prompt = f"Context: df1 is raw data, df2 is fraud alerts.\nUser: {prompt}\n\n(If greeting, reply exactly 'Final Answer: Hello! How can I assist you?')"
                             out = agent.invoke(safe_prompt)["output"]
                             st.markdown(out)
