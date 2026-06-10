@@ -1,151 +1,271 @@
-Client_ID,Name,Job_Title,Date,Month_Year,Gross_Salary,Tax,Net_Salary
-C-1001,Rohan S.,Software Engineer,2019-01-01,Jan 2019,64086,9612,54474
-C-1001,Rohan S.,Software Engineer,2019-02-01,Feb 2019,66015,9902,56113
-C-1001,Rohan S.,Software Engineer,2019-03-01,Mar 2019,74997,11249,63748
-C-1001,Rohan S.,Software Engineer,2019-04-01,Apr 2019,65010,9751,55259
-C-1001,Rohan S.,Software Engineer,2019-05-01,May 2019,63932,9589,54343
-C-1001,Rohan S.,Software Engineer,2019-06-01,Jun 2019,79033,11854,67179
-C-1001,Rohan S.,Software Engineer,2019-07-01,Jul 2019,63903,9585,54318
-C-1001,Rohan S.,Software Engineer,2019-08-01,Aug 2019,63797,9569,54228
-C-1001,Rohan S.,Software Engineer,2019-09-01,Sep 2019,81057,12158,68899
-C-1001,Rohan S.,Software Engineer,2019-10-01,Oct 2019,66271,9940,56331
-C-1001,Rohan S.,Software Engineer,2019-11-01,Nov 2019,64630,9694,54936
-C-1001,Rohan S.,Software Engineer,2019-12-01,Dec 2019,108635,16295,92340
-C-1001,Rohan S.,Software Engineer,2020-01-01,Jan 2020,65537,9830,55707
-C-1001,Rohan S.,Software Engineer,2020-03-01,Mar 2020,77991,11698,66293
-C-1001,Rohan S.,Software Engineer,2020-04-01,Apr 2020,64824,9723,55101
-C-1001,Rohan S.,Software Engineer,2020-05-01,May 2020,63875,9581,54294
-C-1001,Rohan S.,Software Engineer,2020-07-01,Jul 2020,65736,9860,55876
-C-1001,Rohan S.,Software Engineer,2020-08-01,Aug 2020,64635,9695,54940
-C-1001,Rohan S.,Software Engineer,2020-09-01,Sep 2020,82356,12353,70003
-C-1001,Rohan S.,Software Engineer,2020-10-01,Oct 2020,64837,9725,55112
-C-1001,Rohan S.,Software Engineer,2020-12-01,Dec 2020,124239,18635,105604
-C-1001,Rohan S.,Software Engineer,2021-01-01,Jan 2021,64483,9672,54811
-C-1001,Rohan S.,Software Engineer,2021-02-01,Feb 2021,66137,9920,56217
-C-1001,Rohan S.,Software Engineer,2021-03-01,Mar 2021,81840,12276,69564
-C-1001,Rohan S.,Software Engineer,2021-04-01,Apr 2021,65029,9754,55275
-C-1001,Rohan S.,Software Engineer,2021-06-01,Jun 2021,82960,12444,70516
-C-1001,Rohan S.,Software Engineer,2021-07-01,Jul 2021,66189,9928,56261
-C-1001,Rohan S.,Software Engineer,2021-09-01,Sep 2021,83186,12477,70709
-C-1001,Rohan S.,Software Engineer,2021-10-01,Oct 2021,64009,9601,54408
-C-1001,Rohan S.,Software Engineer,2022-01-01,Jan 2022,64152,9622,54530
-C-1001,Rohan S.,Software Engineer,2022-02-01,Feb 2022,65883,9882,56001
-C-1001,Rohan S.,Software Engineer,2022-03-01,Mar 2022,75297,11294,64003
-C-1001,Rohan S.,Software Engineer,2022-04-01,Apr 2022,63804,9570,54234
-C-1001,Rohan S.,Software Engineer,2022-05-01,May 2022,64054,9608,54446
-C-1001,Rohan S.,Software Engineer,2022-06-01,Jun 2022,77664,11649,66015
-C-1001,Rohan S.,Software Engineer,2022-07-01,Jul 2022,64676,9701,54975
-C-1001,Rohan S.,Software Engineer,2022-08-01,Aug 2022,64584,9687,54897
-C-1001,Rohan S.,Software Engineer,2022-09-01,Sep 2022,79531,11929,67602
-C-1001,Rohan S.,Software Engineer,2022-10-01,Oct 2022,64111,9616,54495
-C-1001,Rohan S.,Software Engineer,2022-11-01,Nov 2022,66074,9911,56163
-C-1001,Rohan S.,Software Engineer,2022-12-01,Dec 2022,107483,16122,91361
-C-1001,Rohan S.,Software Engineer,2023-03-01,Mar 2023,79132,11869,67263
-C-1001,Rohan S.,Software Engineer,2023-04-01,Apr 2023,64095,9614,54481
-C-1001,Rohan S.,Software Engineer,2023-05-01,May 2023,65776,9866,55910
-C-1001,Rohan S.,Software Engineer,2023-06-01,Jun 2023,76699,11504,65195
-C-1001,Rohan S.,Software Engineer,2023-08-01,Aug 2023,65410,9811,55599
-C-1001,Rohan S.,Software Engineer,2023-09-01,Sep 2023,77063,11559,65504
-C-1001,Rohan S.,Software Engineer,2023-10-01,Oct 2023,64173,9625,54548
-C-1001,Rohan S.,Software Engineer,2023-11-01,Nov 2023,65112,9766,55346
-C-1001,Rohan S.,Software Engineer,2023-12-01,Dec 2023,109990,16498,93492
-C-1002,Priya P.,Relationship Manager,2019-03-01,Mar 2019,102077,15311,86766
-C-1002,Priya P.,Relationship Manager,2019-06-01,Jun 2019,99411,14911,84500
-C-1002,Priya P.,Relationship Manager,2019-07-01,Jul 2019,84868,12730,72138
-C-1002,Priya P.,Relationship Manager,2019-08-01,Aug 2019,84065,12609,71456
-C-1002,Priya P.,Relationship Manager,2019-09-01,Sep 2019,99964,14994,84970
-C-1002,Priya P.,Relationship Manager,2019-10-01,Oct 2019,85003,12750,72253
-C-1002,Priya P.,Relationship Manager,2019-11-01,Nov 2019,85025,12753,72272
-C-1002,Priya P.,Relationship Manager,2019-12-01,Dec 2019,162201,24330,137871
-C-1002,Priya P.,Relationship Manager,2020-01-01,Jan 2020,84266,12639,71627
-C-1002,Priya P.,Relationship Manager,2020-03-01,Mar 2020,103284,15492,87792
-C-1002,Priya P.,Relationship Manager,2020-04-01,Apr 2020,83522,12528,70994
-C-1002,Priya P.,Relationship Manager,2020-05-01,May 2020,83684,12552,71132
-C-1002,Priya P.,Relationship Manager,2020-06-01,Jun 2020,96427,14464,81963
-C-1002,Priya P.,Relationship Manager,2020-07-01,Jul 2020,84811,12721,72090
-C-1002,Priya P.,Relationship Manager,2020-08-01,Aug 2020,85506,12825,72681
-C-1002,Priya P.,Relationship Manager,2020-10-01,Oct 2020,84437,12665,71772
-C-1002,Priya P.,Relationship Manager,2020-11-01,Nov 2020,84429,12664,71765
-C-1002,Priya P.,Relationship Manager,2020-12-01,Dec 2020,163293,24493,138800
-C-1002,Priya P.,Relationship Manager,2021-01-01,Jan 2021,83681,12552,71129
-C-1002,Priya P.,Relationship Manager,2021-02-01,Feb 2021,85852,12877,72975
-C-1002,Priya P.,Relationship Manager,2021-03-01,Mar 2021,105472,15820,89652
-C-1002,Priya P.,Relationship Manager,2021-04-01,Apr 2021,85195,12779,72416
-C-1002,Priya P.,Relationship Manager,2021-05-01,May 2021,84959,12743,72216
-C-1002,Priya P.,Relationship Manager,2021-06-01,Jun 2021,98979,14846,84133
-C-1002,Priya P.,Relationship Manager,2021-07-01,Jul 2021,83903,12585,71318
-C-1002,Priya P.,Relationship Manager,2021-08-01,Aug 2021,85794,12869,72925
-C-1002,Priya P.,Relationship Manager,2021-09-01,Sep 2021,107914,16187,91727
-C-1002,Priya P.,Relationship Manager,2021-10-01,Oct 2021,84569,12685,71884
-C-1002,Priya P.,Relationship Manager,2021-11-01,Nov 2021,85778,12866,72912
-C-1002,Priya P.,Relationship Manager,2021-12-01,Dec 2021,157603,23640,133963
-C-1002,Priya P.,Relationship Manager,2022-01-01,Jan 2022,84273,12640,71633
-C-1002,Priya P.,Relationship Manager,2022-02-01,Feb 2022,84827,12724,72103
-C-1002,Priya P.,Relationship Manager,2022-03-01,Mar 2022,103709,15556,88153
-C-1002,Priya P.,Relationship Manager,2022-04-01,Apr 2022,86328,12949,73379
-C-1002,Priya P.,Relationship Manager,2022-05-01,May 2022,86144,12921,73223
-C-1002,Priya P.,Relationship Manager,2022-06-01,Jun 2022,99902,14985,84917
-C-1002,Priya P.,Relationship Manager,2022-07-01,Jul 2022,85865,12879,72986
-C-1002,Priya P.,Relationship Manager,2022-08-01,Aug 2022,83773,12565,71208
-C-1002,Priya P.,Relationship Manager,2022-09-01,Sep 2022,96407,14461,81946
-C-1002,Priya P.,Relationship Manager,2022-11-01,Nov 2022,85820,12873,72947
-C-1002,Priya P.,Relationship Manager,2022-12-01,Dec 2022,164038,24605,139433
-C-1002,Priya P.,Relationship Manager,2023-01-01,Jan 2023,85500,12825,72675
-C-1002,Priya P.,Relationship Manager,2023-02-01,Feb 2023,84609,12691,71918
-C-1002,Priya P.,Relationship Manager,2023-04-01,Apr 2023,85447,12817,72630
-C-1002,Priya P.,Relationship Manager,2023-05-01,May 2023,84775,12716,72059
-C-1002,Priya P.,Relationship Manager,2023-06-01,Jun 2023,100323,15048,85275
-C-1002,Priya P.,Relationship Manager,2023-07-01,Jul 2023,86398,12959,73439
-C-1002,Priya P.,Relationship Manager,2023-08-01,Aug 2023,85119,12767,72352
-C-1002,Priya P.,Relationship Manager,2023-10-01,Oct 2023,84591,12688,71903
-C-1002,Priya P.,Relationship Manager,2023-11-01,Nov 2023,84065,12609,71456
-C-1003,Vikram B.,Data Analyst,2019-01-01,Jan 2019,50083,7512,42571
-C-1003,Vikram B.,Data Analyst,2019-02-01,Feb 2019,50996,7649,43347
-C-1003,Vikram B.,Data Analyst,2019-03-01,Mar 2019,64350,9652,54698
-C-1003,Vikram B.,Data Analyst,2019-04-01,Apr 2019,49522,7428,42094
-C-1003,Vikram B.,Data Analyst,2019-05-01,May 2019,50087,7513,42574
-C-1003,Vikram B.,Data Analyst,2019-06-01,Jun 2019,64569,9685,54884
-C-1003,Vikram B.,Data Analyst,2019-07-01,Jul 2019,50843,7626,43217
-C-1003,Vikram B.,Data Analyst,2019-08-01,Aug 2019,50581,7587,42994
-C-1003,Vikram B.,Data Analyst,2019-11-01,Nov 2019,49640,7446,42194
-C-1003,Vikram B.,Data Analyst,2020-01-01,Jan 2020,50026,7503,42523
-C-1003,Vikram B.,Data Analyst,2020-02-01,Feb 2020,49849,7477,42372
-C-1003,Vikram B.,Data Analyst,2020-03-01,Mar 2020,61596,9239,52357
-C-1003,Vikram B.,Data Analyst,2020-04-01,Apr 2020,50062,7509,42553
-C-1003,Vikram B.,Data Analyst,2020-05-01,May 2020,49525,7428,42097
-C-1003,Vikram B.,Data Analyst,2020-07-01,Jul 2020,50689,7603,43086
-C-1003,Vikram B.,Data Analyst,2020-08-01,Aug 2020,49791,7468,42323
-C-1003,Vikram B.,Data Analyst,2020-10-01,Oct 2020,49601,7440,42161
-C-1003,Vikram B.,Data Analyst,2020-11-01,Nov 2020,49265,7389,41876
-C-1003,Vikram B.,Data Analyst,2021-01-01,Jan 2021,50914,7637,43277
-C-1003,Vikram B.,Data Analyst,2021-02-01,Feb 2021,50438,7565,42873
-C-1003,Vikram B.,Data Analyst,2021-03-01,Mar 2021,58301,8745,49556
-C-1003,Vikram B.,Data Analyst,2021-04-01,Apr 2021,49114,7367,41747
-C-1003,Vikram B.,Data Analyst,2021-05-01,May 2021,50554,7583,42971
-C-1003,Vikram B.,Data Analyst,2021-06-01,Jun 2021,58780,8817,49963
-C-1003,Vikram B.,Data Analyst,2021-08-01,Aug 2021,49381,7407,41974
-C-1003,Vikram B.,Data Analyst,2021-09-01,Sep 2021,61764,9264,52500
-C-1003,Vikram B.,Data Analyst,2021-10-01,Oct 2021,49117,7367,41750
-C-1003,Vikram B.,Data Analyst,2021-11-01,Nov 2021,49273,7390,41883
-C-1003,Vikram B.,Data Analyst,2021-12-01,Dec 2021,83907,12586,71321
-C-1003,Vikram B.,Data Analyst,2022-01-01,Jan 2022,50857,7628,43229
-C-1003,Vikram B.,Data Analyst,2022-03-01,Mar 2022,58813,8821,49992
-C-1003,Vikram B.,Data Analyst,2022-04-01,Apr 2022,49636,7445,42191
-C-1003,Vikram B.,Data Analyst,2022-06-01,Jun 2022,59760,8964,50796
-C-1003,Vikram B.,Data Analyst,2022-07-01,Jul 2022,50142,7521,42621
-C-1003,Vikram B.,Data Analyst,2022-08-01,Aug 2022,49078,7361,41717
-C-1003,Vikram B.,Data Analyst,2022-10-01,Oct 2022,49481,7422,42059
-C-1003,Vikram B.,Data Analyst,2022-11-01,Nov 2022,49585,7437,42148
-C-1003,Vikram B.,Data Analyst,2022-12-01,Dec 2022,82587,12388,70199
-C-1003,Vikram B.,Data Analyst,2023-01-01,Jan 2023,50048,7507,42541
-C-1003,Vikram B.,Data Analyst,2023-02-01,Feb 2023,49322,7398,41924
-C-1003,Vikram B.,Data Analyst,2023-03-01,Mar 2023,64341,9651,54690
-C-1003,Vikram B.,Data Analyst,2023-04-01,Apr 2023,49236,7385,41851
-C-1003,Vikram B.,Data Analyst,2023-05-01,May 2023,50756,7613,43143
-C-1003,Vikram B.,Data Analyst,2023-06-01,Jun 2023,64798,9719,55079
-C-1003,Vikram B.,Data Analyst,2023-07-01,Jul 2023,50437,7565,42872
-C-1003,Vikram B.,Data Analyst,2023-08-01,Aug 2023,50038,7505,42533
-C-1003,Vikram B.,Data Analyst,2023-09-01,Sep 2023,59895,8984,50911
-C-1003,Vikram B.,Data Analyst,2023-10-01,Oct 2023,50385,7557,42828
-C-1003,Vikram B.,Data Analyst,2023-11-01,Nov 2023,49287,7393,41894
-C-1003,Vikram B.,Data Analyst,2023-12-01,Dec 2023,80995,12149,68846
+Client_ID,Name,Job_Title,SOW_Driver,Date,Month_Year,Gross_Salary,Tax,Net_Salary
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2019-01-01,Jan 2019,63918,9587,54331
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2019-02-01,Feb 2019,65639,9845,55794
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2019-04-01,Apr 2019,66077,9911,56166
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2019-06-01,Jun 2019,81182,12177,69005
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2019-07-01,Jul 2019,65474,9821,55653
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2019-08-01,Aug 2019,63949,9592,54357
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2019-09-01,Sep 2019,74808,11221,63587
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2019-10-01,Oct 2019,65709,9856,55853
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2019-12-01,Dec 2019,124410,18661,105749
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2020-01-01,Jan 2020,64856,9728,55128
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2020-02-01,Feb 2020,65945,9891,56054
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2020-04-01,Apr 2020,64721,9708,55013
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2020-05-01,May 2020,65153,9772,55381
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2020-06-01,Jun 2020,84699,12704,71995
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2020-07-01,Jul 2020,65616,9842,55774
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2020-08-01,Aug 2020,65552,9832,55720
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2020-10-01,Oct 2020,64384,9657,54727
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2020-11-01,Nov 2020,65221,9783,55438
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2021-01-01,Jan 2021,64157,9623,54534
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2021-02-01,Feb 2021,65101,9765,55336
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2021-03-01,Mar 2021,83970,12595,71375
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2021-04-01,Apr 2021,63845,9576,54269
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2021-05-01,May 2021,64549,9682,54867
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2021-06-01,Jun 2021,80810,12121,68689
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2021-07-01,Jul 2021,65697,9854,55843
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2021-08-01,Aug 2021,64891,9733,55158
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2021-09-01,Sep 2021,84116,12617,71499
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2021-11-01,Nov 2021,64473,9670,54803
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2021-12-01,Dec 2021,121915,18287,103628
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2022-01-01,Jan 2022,63748,9562,54186
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2022-02-01,Feb 2022,65158,9773,55385
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2022-03-01,Mar 2022,75982,11397,64585
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2022-04-01,Apr 2022,66150,9922,56228
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2022-05-01,May 2022,65978,9896,56082
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2022-06-01,Jun 2022,81248,12187,69061
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2022-07-01,Jul 2022,64855,9728,55127
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2022-08-01,Aug 2022,64370,9655,54715
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2022-09-01,Sep 2022,76100,11415,64685
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2022-10-01,Oct 2022,64290,9643,54647
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2022-11-01,Nov 2022,64597,9689,54908
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2022-12-01,Dec 2022,118186,17727,100459
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2023-02-01,Feb 2023,64069,9610,54459
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2023-03-01,Mar 2023,80855,12128,68727
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2023-04-01,Apr 2023,64335,9650,54685
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2023-05-01,May 2023,64505,9675,54830
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2023-06-01,Jun 2023,78359,11753,66606
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2023-07-01,Jul 2023,64308,9646,54662
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2023-09-01,Sep 2023,82404,12360,70044
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2023-10-01,Oct 2023,64085,9612,54473
+C-1001,Robert Kramer,Software Engineer,Executive Yield (Salary),2023-11-01,Nov 2023,65438,9815,55623
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2019-02-01,Feb 2019,40000,4000,36000
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2019-03-01,Mar 2019,40000,4000,36000
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2019-05-01,May 2019,40000,4000,36000
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2019-06-01,Jun 2019,40000,4000,36000
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2019-08-01,Aug 2019,40000,4000,36000
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2019-09-01,Sep 2019,40000,4000,36000
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2019-10-01,Oct 2019,40000,4000,36000
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2019-11-01,Nov 2019,40000,4000,36000
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2019-12-01,Dec 2019,40000,4000,36000
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2020-01-01,Jan 2020,44000,4400,39600
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2020-02-01,Feb 2020,44000,4400,39600
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2020-03-01,Mar 2020,44000,4400,39600
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2020-04-01,Apr 2020,44000,4400,39600
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2020-05-01,May 2020,44000,4400,39600
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2020-06-01,Jun 2020,44000,4400,39600
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2020-07-01,Jul 2020,44000,4400,39600
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2020-08-01,Aug 2020,44000,4400,39600
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2020-09-01,Sep 2020,44000,4400,39600
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2020-10-01,Oct 2020,44000,4400,39600
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2020-11-01,Nov 2020,44000,4400,39600
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2021-01-01,Jan 2021,48400,4840,43560
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2021-02-01,Feb 2021,48400,4840,43560
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2021-03-01,Mar 2021,48400,4840,43560
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2021-04-01,Apr 2021,48400,4840,43560
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2021-06-01,Jun 2021,48400,4840,43560
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2021-07-01,Jul 2021,48400,4840,43560
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2021-09-01,Sep 2021,48400,4840,43560
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2021-10-01,Oct 2021,48400,4840,43560
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2021-11-01,Nov 2021,48400,4840,43560
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2021-12-01,Dec 2021,48400,4840,43560
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2022-01-01,Jan 2022,53240,5324,47916
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2022-02-01,Feb 2022,53240,5324,47916
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2022-03-01,Mar 2022,53240,5324,47916
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2022-04-01,Apr 2022,53240,5324,47916
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2022-06-01,Jun 2022,53240,5324,47916
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2022-08-01,Aug 2022,53240,5324,47916
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2022-09-01,Sep 2022,53240,5324,47916
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2022-11-01,Nov 2022,53240,5324,47916
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2022-12-01,Dec 2022,53240,5324,47916
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2023-01-01,Jan 2023,58564,5856,52708
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2023-02-01,Feb 2023,58564,5856,52708
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2023-03-01,Mar 2023,58564,5856,52708
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2023-04-01,Apr 2023,58564,5856,52708
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2023-05-01,May 2023,58564,5856,52708
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2023-06-01,Jun 2023,58564,5856,52708
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2023-08-01,Aug 2023,58564,5856,52708
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2023-09-01,Sep 2023,58564,5856,52708
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2023-10-01,Oct 2023,58564,5856,52708
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2023-11-01,Nov 2023,58564,5856,52708
+C-1001,Robert Kramer,Property Landlord,Real Estate Yield (Rent),2023-12-01,Dec 2023,58564,5856,52708
+C-1001,Robert Kramer,Shareholder / Director,Corporate Equity Liquidation,2019-06-01,Jun 2019,129866,12986,116880
+C-1001,Robert Kramer,Shareholder / Director,Corporate Equity Liquidation,2019-12-01,Dec 2019,117170,11717,105453
+C-1001,Robert Kramer,Shareholder / Director,Corporate Equity Liquidation,2020-03-01,Mar 2020,113345,11334,102011
+C-1001,Robert Kramer,Shareholder / Director,Corporate Equity Liquidation,2020-06-01,Jun 2020,119477,11947,107530
+C-1001,Robert Kramer,Shareholder / Director,Corporate Equity Liquidation,2021-03-01,Mar 2021,110615,11061,99554
+C-1001,Robert Kramer,Shareholder / Director,Corporate Equity Liquidation,2021-06-01,Jun 2021,109522,10952,98570
+C-1001,Robert Kramer,Shareholder / Director,Corporate Equity Liquidation,2022-09-01,Sep 2022,147961,14796,133165
+C-1001,Robert Kramer,Shareholder / Director,Corporate Equity Liquidation,2023-03-01,Mar 2023,121624,12162,109462
+C-1001,Robert Kramer,Shareholder / Director,Corporate Equity Liquidation,2023-06-01,Jun 2023,138996,13899,125097
+C-1001,Robert Kramer,Shareholder / Director,Corporate Equity Liquidation,2023-12-01,Dec 2023,119220,11922,107298
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2019-01-01,Jan 2019,86185,12927,73258
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2019-02-01,Feb 2019,83390,12508,70882
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2019-03-01,Mar 2019,99963,14994,84969
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2019-04-01,Apr 2019,84740,12711,72029
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2019-06-01,Jun 2019,102348,15352,86996
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2019-08-01,Aug 2019,83914,12587,71327
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2019-09-01,Sep 2019,104038,15605,88433
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2019-10-01,Oct 2019,86257,12938,73319
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2019-11-01,Nov 2019,84030,12604,71426
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2020-01-01,Jan 2020,85997,12899,73098
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2020-02-01,Feb 2020,83384,12507,70877
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2020-03-01,Mar 2020,108586,16287,92299
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2020-05-01,May 2020,83889,12583,71306
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2020-06-01,Jun 2020,103848,15577,88271
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2020-08-01,Aug 2020,85305,12795,72510
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2020-09-01,Sep 2020,98148,14722,83426
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2020-10-01,Oct 2020,84251,12637,71614
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2020-11-01,Nov 2020,86204,12930,73274
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2020-12-01,Dec 2020,159894,23984,135910
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2021-01-01,Jan 2021,85233,12784,72449
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2021-02-01,Feb 2021,84090,12613,71477
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2021-03-01,Mar 2021,98946,14841,84105
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2021-04-01,Apr 2021,84117,12617,71500
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2021-05-01,May 2021,84597,12689,71908
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2021-06-01,Jun 2021,102246,15336,86910
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2021-07-01,Jul 2021,85123,12768,72355
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2021-08-01,Aug 2021,86213,12931,73282
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2021-09-01,Sep 2021,105945,15891,90054
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2021-11-01,Nov 2021,86519,12977,73542
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2022-01-01,Jan 2022,85176,12776,72400
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2022-03-01,Mar 2022,108508,16276,92232
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2022-04-01,Apr 2022,85244,12786,72458
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2022-05-01,May 2022,83937,12590,71347
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2022-06-01,Jun 2022,102086,15312,86774
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2022-07-01,Jul 2022,86268,12940,73328
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2022-10-01,Oct 2022,85956,12893,73063
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2022-11-01,Nov 2022,85467,12820,72647
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2022-12-01,Dec 2022,169314,25397,143917
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2023-01-01,Jan 2023,84421,12663,71758
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2023-02-01,Feb 2023,83654,12548,71106
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2023-03-01,Mar 2023,104855,15728,89127
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2023-04-01,Apr 2023,86392,12958,73434
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2023-05-01,May 2023,85704,12855,72849
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2023-06-01,Jun 2023,106596,15989,90607
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2023-07-01,Jul 2023,86313,12946,73367
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2023-08-01,Aug 2023,85231,12784,72447
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2023-09-01,Sep 2023,97882,14682,83200
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2023-10-01,Oct 2023,86647,12997,73650
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2023-11-01,Nov 2023,84822,12723,72099
+C-1002,Priya Patel,Relationship Manager,Executive Yield (Salary),2023-12-01,Dec 2023,142435,21365,121070
+C-1002,Priya Patel,Shareholder / Director,Corporate Equity Liquidation,2019-12-01,Dec 2019,189864,18986,170878
+C-1002,Priya Patel,Shareholder / Director,Corporate Equity Liquidation,2020-03-01,Mar 2020,191730,19173,172557
+C-1002,Priya Patel,Shareholder / Director,Corporate Equity Liquidation,2020-06-01,Jun 2020,223043,22304,200739
+C-1002,Priya Patel,Shareholder / Director,Corporate Equity Liquidation,2020-12-01,Dec 2020,187893,18789,169104
+C-1002,Priya Patel,Shareholder / Director,Corporate Equity Liquidation,2021-03-01,Mar 2021,210165,21016,189149
+C-1002,Priya Patel,Shareholder / Director,Corporate Equity Liquidation,2021-06-01,Jun 2021,225242,22524,202718
+C-1002,Priya Patel,Shareholder / Director,Corporate Equity Liquidation,2021-09-01,Sep 2021,241562,24156,217406
+C-1002,Priya Patel,Shareholder / Director,Corporate Equity Liquidation,2022-03-01,Mar 2022,208190,20819,187371
+C-1002,Priya Patel,Shareholder / Director,Corporate Equity Liquidation,2023-09-01,Sep 2023,230122,23012,207110
+C-1002,Priya Patel,Shareholder / Director,Corporate Equity Liquidation,2023-12-01,Dec 2023,210566,21056,189510
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2019-01-01,Jan 2019,50899,7634,43265
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2019-02-01,Feb 2019,49577,7436,42141
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2019-03-01,Mar 2019,61473,9220,52253
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2019-04-01,Apr 2019,50054,7508,42546
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2019-05-01,May 2019,50494,7574,42920
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2019-07-01,Jul 2019,50212,7531,42681
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2019-08-01,Aug 2019,49710,7456,42254
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2019-10-01,Oct 2019,50322,7548,42774
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2019-12-01,Dec 2019,96648,14497,82151
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2020-01-01,Jan 2020,49025,7353,41672
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2020-02-01,Feb 2020,49334,7400,41934
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2020-03-01,Mar 2020,60534,9080,51454
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2020-05-01,May 2020,49948,7492,42456
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2020-06-01,Jun 2020,65612,9841,55771
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2020-07-01,Jul 2020,49052,7357,41695
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2020-08-01,Aug 2020,50141,7521,42620
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2020-09-01,Sep 2020,62736,9410,53326
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2020-10-01,Oct 2020,49997,7499,42498
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2020-11-01,Nov 2020,49273,7390,41883
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2020-12-01,Dec 2020,97474,14621,82853
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2021-01-01,Jan 2021,50712,7606,43106
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2021-02-01,Feb 2021,50039,7505,42534
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2021-03-01,Mar 2021,59375,8906,50469
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2021-04-01,Apr 2021,49240,7386,41854
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2021-05-01,May 2021,50153,7522,42631
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2021-06-01,Jun 2021,61406,9210,52196
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2021-07-01,Jul 2021,49919,7487,42432
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2021-09-01,Sep 2021,57034,8555,48479
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2021-11-01,Nov 2021,49714,7457,42257
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2021-12-01,Dec 2021,92456,13868,78588
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2022-01-01,Jan 2022,50049,7507,42542
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2022-02-01,Feb 2022,50206,7530,42676
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2022-04-01,Apr 2022,49960,7494,42466
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2022-05-01,May 2022,50526,7578,42948
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2022-06-01,Jun 2022,59820,8973,50847
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2022-08-01,Aug 2022,50684,7602,43082
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2022-09-01,Sep 2022,60112,9016,51096
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2022-10-01,Oct 2022,50399,7559,42840
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2022-11-01,Nov 2022,49400,7410,41990
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2022-12-01,Dec 2022,79570,11935,67635
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2023-01-01,Jan 2023,50179,7526,42653
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2023-02-01,Feb 2023,50070,7510,42560
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2023-03-01,Mar 2023,61702,9255,52447
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2023-04-01,Apr 2023,49659,7448,42211
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2023-05-01,May 2023,49358,7403,41955
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2023-06-01,Jun 2023,63400,9510,53890
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2023-07-01,Jul 2023,49567,7435,42132
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2023-09-01,Sep 2023,63751,9562,54189
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2023-10-01,Oct 2023,49071,7360,41711
+C-1003,Vikram Biswas,Data Analyst,Executive Yield (Salary),2023-12-01,Dec 2023,96164,14424,81740
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2019-02-01,Feb 2019,25000,2500,22500
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2019-03-01,Mar 2019,25000,2500,22500
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2019-04-01,Apr 2019,25000,2500,22500
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2019-06-01,Jun 2019,25000,2500,22500
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2019-07-01,Jul 2019,25000,2500,22500
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2019-08-01,Aug 2019,25000,2500,22500
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2019-09-01,Sep 2019,25000,2500,22500
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2019-10-01,Oct 2019,25000,2500,22500
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2019-11-01,Nov 2019,25000,2500,22500
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2020-01-01,Jan 2020,27500,2750,24750
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2020-02-01,Feb 2020,27500,2750,24750
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2020-03-01,Mar 2020,27500,2750,24750
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2020-05-01,May 2020,27500,2750,24750
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2020-06-01,Jun 2020,27500,2750,24750
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2020-07-01,Jul 2020,27500,2750,24750
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2020-08-01,Aug 2020,27500,2750,24750
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2020-09-01,Sep 2020,27500,2750,24750
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2020-10-01,Oct 2020,27500,2750,24750
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2020-11-01,Nov 2020,27500,2750,24750
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2020-12-01,Dec 2020,27500,2750,24750
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2021-01-01,Jan 2021,30250,3025,27225
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2021-02-01,Feb 2021,30250,3025,27225
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2021-04-01,Apr 2021,30250,3025,27225
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2021-05-01,May 2021,30250,3025,27225
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2021-06-01,Jun 2021,30250,3025,27225
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2021-07-01,Jul 2021,30250,3025,27225
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2021-08-01,Aug 2021,30250,3025,27225
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2021-09-01,Sep 2021,30250,3025,27225
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2021-10-01,Oct 2021,30250,3025,27225
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2021-11-01,Nov 2021,30250,3025,27225
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2021-12-01,Dec 2021,30250,3025,27225
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2022-01-01,Jan 2022,33275,3327,29948
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2022-03-01,Mar 2022,33275,3327,29948
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2022-05-01,May 2022,33275,3327,29948
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2022-06-01,Jun 2022,33275,3327,29948
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2022-07-01,Jul 2022,33275,3327,29948
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2022-08-01,Aug 2022,33275,3327,29948
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2022-09-01,Sep 2022,33275,3327,29948
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2022-10-01,Oct 2022,33275,3327,29948
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2022-11-01,Nov 2022,33275,3327,29948
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2022-12-01,Dec 2022,33275,3327,29948
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2023-02-01,Feb 2023,36602,3660,32942
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2023-03-01,Mar 2023,36602,3660,32942
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2023-04-01,Apr 2023,36602,3660,32942
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2023-05-01,May 2023,36602,3660,32942
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2023-06-01,Jun 2023,36602,3660,32942
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2023-08-01,Aug 2023,36602,3660,32942
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2023-09-01,Sep 2023,36602,3660,32942
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2023-11-01,Nov 2023,36602,3660,32942
+C-1003,Vikram Biswas,Property Landlord,Real Estate Yield (Rent),2023-12-01,Dec 2023,36602,3660,32942
