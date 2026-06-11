@@ -81,7 +81,7 @@ def init_db():
             },
             "C-1003": {
                 "Client_ID": "C-1003",
-                "Name": "Vikram Biswas",
+                "Name": "Vikram Seth",
                 "Net_Worth": "$75,000,000 USD",
                 "Nationality": "India",
                 "Relationship_Since": "12 Aug 2018",

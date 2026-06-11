@@ -14,7 +14,7 @@ os.makedirs("mock_data/pdfs", exist_ok=True)
 clients = [
     {"Client_ID": "C-1001", "Name": "Robert Kramer", "Job_Title": "Software Engineer", "Salary_Base": 65000, "Rent_Base": 40000, "Equity_Base": 120000},
     {"Client_ID": "C-1002", "Name": "Priya Patel", "Job_Title": "Relationship Manager", "Salary_Base": 85000, "Rent_Base": 0, "Equity_Base": 200000},
-    {"Client_ID": "C-1003", "Name": "Vikram Biswas", "Job_Title": "Data Analyst", "Salary_Base": 50000, "Rent_Base": 25000, "Equity_Base": 0}
+    {"Client_ID": "C-1003", "Name": "Vikram Seth", "Job_Title": "Data Analyst", "Salary_Base": 50000, "Rent_Base": 25000, "Equity_Base": 0}
 ]
 
 start_date = datetime(2019, 1, 1)

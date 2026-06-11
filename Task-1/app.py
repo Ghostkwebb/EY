@@ -6,6 +6,7 @@ import re
 import plotly.express as px
 import os
 import db  
+import auth
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain_experimental.agents import create_pandas_dataframe_agent
@@ -17,10 +18,17 @@ from serpapi import GoogleSearch
 load_dotenv()
 st.set_page_config(page_title="Origin of Capital Portal", layout="wide")
 db.init_db()  
+auth.check_auth()
 
-# --- GLOBAL CONFIG DEFAULTS (KILLS NAMEERROR) ---
-llm_choice = "Groq (Cloud)"
-api_key = os.getenv("GROQ_API_KEY")
+# --- DYNAMIC CONFIG BASED ON AUTH & SESSION STATE ---
+if "dev_llm" not in st.session_state:
+    st.session_state.dev_llm = "Groq (Cloud)"
+
+is_dev = st.session_state.get("is_dev", False)
+
+# If developer is logged in (ghostkwebb), use their toggled engine. Otherwise, default silently to Groq.
+llm_choice = st.session_state.dev_llm if is_dev else "Groq (Cloud)"
+api_key = os.getenv("GROQ_API_KEY") if llm_choice == "Groq (Cloud)" else "lm-studio"
 
 class SalaryData(BaseModel):
     Client_ID: str = Field(description="Unique client identifier")
@@ -50,7 +58,7 @@ def fetch_real_benchmark(job_title, serp_key, llm_choice, groq_key):
             yearly_val = int(float(lakh_match.group(1)) * 100000)
         else:
             if llm_choice == "Groq (Cloud)": llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=groq_key, temperature=0)
-            else: llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="gemma-4-e4b-it", temperature=0)
+            else: llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="local-model", temperature=0)
                 
             prompt = f"Snippets: '{snippets}'. Extract the average YEARLY salary. Return ONLY the raw integer. If it says '6 Lakhs', output 600000."
             ans = llm.invoke(prompt).content
@@ -86,7 +94,7 @@ def parse_pdf(file, llm_choice, api_key):
         }
     except AttributeError:
         if llm_choice == "Groq (Cloud)": llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=api_key, temperature=0)
-        else: llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="gemma-4-e4b-it", temperature=0)
+        else: llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="local-model", temperature=0)
         try: return llm.with_structured_output(SalaryData).invoke(f"Extract details.\n\nText: {text}").model_dump()
         except Exception: return None
 
@@ -236,7 +244,7 @@ st.title("EY: FIDUCIARY VERACITY PORTAL")
 all_client_options = {
     "Robert Kramer (C-1001)": "C-1001",
     "Priya Patel (C-1002)": "C-1002",
-    "Vikram Biswas (C-1003)": "C-1003"
+    "Vikram Seth (C-1003)": "C-1003"
 }
 
 st.write("### 🔍 TARGET LOOKUP")
@@ -547,6 +555,39 @@ else:
         <p style="font-size:13px; color:#8a8a8f !important; line-height:1.5;">Compare executive yields, rental streams, and equity liquidations against live global market indices to verify wealth plausibility.</p>
     </div>
     """, unsafe_allow_html=True)
+    
+# --- SYSTEM SESSION CONTROL (Logout & Developer override) ---
+st.write("---")
+with st.expander("⚙️ SYSTEM SESSION CONTROL", expanded=False):
+    col_logout, col_dev = st.columns(2)
+    
+    with col_logout:
+        # Secure Logout Button
+        if st.button("🚪 LOGOUT", use_container_width=True):
+            st.session_state.authenticated = False
+            st.session_state.is_dev = False
+            st.session_state.active_client = None
+            st.session_state.view_mode = "summary"
+            st.toast("LOGGED OUT.")
+            st.rerun()
+            
+    with col_dev:
+        # Developer Override Switch (Only visible if logged in as ghostkwebb)
+        is_dev = st.session_state.get("is_dev", False)
+        if is_dev:
+            st.write("**🔧 DEVELOPER SYSTEM OVERRIDE ACTIVE**")
+            dev_selection = st.radio(
+                "Select Active Engine:", 
+                ["LM Studio (Local)", "Groq (Cloud)"], 
+                index=0 if st.session_state.dev_llm == "LM Studio (Local)" else 1, 
+                key="dev_llm_selector_radio_btn", 
+                horizontal=True
+            )
+            if dev_selection != st.session_state.dev_llm:
+                st.session_state.dev_llm = dev_selection
+                st.rerun()
+        else:
+            st.info("System Engine Status: Secured Cloud Mode")
 
 # --- TERMINAL AI WIDGET ---
 if "chat_history" not in st.session_state:
@@ -578,11 +619,42 @@ with st.popover("💬 TERMINAL AI", use_container_width=False):
                             df = full_db_df[full_db_df['Client_ID'] == client['Client_ID']]
                         except:
                             df = pd.DataFrame()
+                        
+                        # --- NEW: DYNAMIC HIGH-SPEED CONTEXT SUMMARY ---
+                        sow_lines = []
+                        for cat, data in client["SOW_Drivers"].items():
+                            sow_lines.append(f"- {cat}: Status is '{data['Status']}'. Files linked: {', '.join(data['Slips']) if data['Slips'] else 'None'}")
+                        sow_summary_str = "\\n".join(sow_lines)
+                        
+                        # Pack all summary metrics into system prompt
+                        SYS_PREFIX = f"""
+                        You are the EY Fiduciary AI Agent analyzing the active client: {client['Name']}.
+                        Here is the live audited summary of the client's Origin of Capital Profile. 
+                        Use this summary to answer questions INSTANTLY. DO NOT run python code if the answer is in this summary.
+                        
+                        [CLIENT SUMMARY]
+                        - Client ID: {client['Client_ID']}
+                        - Client Name: {client['Name']}
+                        - Net Worth: {client['Net_Worth']}
+                        - Nationality: {client['Nationality']}
+                        - Relationship Since: {client['Relationship_Since']}
+                        - Region / Sub-Region: {client['Region']} / {client['Sub_Region']}
+                        - Account Number: {client['Account_Number']}
+                        - RM Name: {client['RM_Name']}
+                        - SOW Industry / SOW Country: {client['Industry']} / {client['Country']}
+                        
+                        [INFLOW STREAMS VERACITY COMPLIANCE]
+                        {sow_summary_str}
+                        
+                        Only use the python_repl_ast tool if the user asks for a complex calculation on the dataframe `df` (like standard deviations, means, or custom aggregations) that is not listed in the summary above.
+                        If user says 'Hi' or 'Hello', reply politely with a Final Answer.
+                        """
                             
-                        llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=api_key) if llm_choice == "Groq (Cloud)" else ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="gemma-4-e4b-it", temperature=0)
+                        llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=api_key) if llm_choice == "Groq (Cloud)" else ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="local-model", temperature=0)
                         try:
-                            agent = create_pandas_dataframe_agent(llm, df, verbose=True, allow_dangerous_code=True, number_of_head_rows=3)
-                            safe_prompt = f"Context: df is raw salary slips data for {client['Name']}.\nUser: {prompt}\n\n(If greeting, reply exactly 'Final Answer: Hello! How can I assist you?')"
+                            # Pass high-speed context prefix
+                            agent = create_pandas_dataframe_agent(llm, df, verbose=True, allow_dangerous_code=True, number_of_head_rows=3, prefix=SYS_PREFIX)
+                            safe_prompt = f"{prompt}\\n\\n(Remember: If the answer is in the system context summary, output 'Final Answer: [your response]' directly without using python tools)"
                             out = agent.invoke(safe_prompt)["output"]
                             st.markdown(out)
                             st.session_state.chat_history.append({"role": "assistant", "content": out})
