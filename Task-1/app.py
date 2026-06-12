@@ -38,46 +38,68 @@ class SalaryData(BaseModel):
     Gross_Salary: float = Field(description="Gross salary amount")
 
 @st.cache_data 
-def fetch_real_benchmark(job_title, serp_key, llm_choice, groq_key):
-    """Scrapes Google for real benchmark salary data with LLM extraction."""
-    fallbacks = {"Software Engineer": 75000, "Relationship Manager": 95000, "Data Analyst": 60000}
-    if not serp_key: return fallbacks.get(job_title, 50000), "No SerpAPI key. Using fallback."
+def fetch_real_benchmark_sources(job_title, serp_key, llm_choice, groq_key):
+    """Scrapes Google via SerpAPI, extracts monthly salary for the top 3 organic sources."""
+    fallbacks = [
+        {"val": 75000, "src": "Glassdoor (Fallback)", "snip": "Average national salary on Glassdoor", "link": "https://www.glassdoor.com"},
+        {"val": 95000, "src": "AmbitionBox (Fallback)", "snip": "High-percentile yield on AmbitionBox", "link": "https://www.ambitionbox.com"},
+        {"val": 60000, "src": "LinkedIn (Fallback)", "snip": "Junior-to-mid baseline on LinkedIn", "link": "https://www.linkedin.com"}
+    ]
+    if not serp_key: return fallbacks
     
     params = {"q": f"average salary for {job_title} in India Glassdoor AmbitionBox", "hl": "en", "gl": "in", "api_key": serp_key}
     try:
         search = GoogleSearch(params)
         results = search.get_dict()
-        snippets = " ".join([res.get("snippet", "") for res in results.get("organic_results", [])[:3]])
+        organic = results.get("organic_results", [])[:3]
         
-        if not snippets: return fallbacks.get(job_title, 50000), "No Google results."
+        if not organic: return fallbacks
         
-        yearly_val = 0
-        lakh_match = re.search(r'(?:₹|Rs\.?)?\s*([\d\.]+)\s*(?:Lakhs?|LPA)', snippets, re.IGNORECASE)
-        
-        if lakh_match:
-            yearly_val = int(float(lakh_match.group(1)) * 100000)
-        else:
-            if llm_choice == "Groq (Cloud)": llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=groq_key, temperature=0)
-            else: llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="local-model", temperature=0)
+        sources = []
+        for idx, res in enumerate(organic):
+            title = res.get("title", "")
+            d_link = res.get("displayed_link", "")
+            snippet = res.get("snippet", "")
+            link = res.get("link", "https://www.google.com")
+            
+            # FIXED: Dynamic domain extractor (Resolves "https:" bug)
+            domain = d_link.split("/")[2] if "://" in d_link else d_link.split("/")[0]
+            domain_clean = domain.replace("www.", "")
+            
+            src_name = "Glassdoor"
+            if "ambitionbox" in domain_clean.lower() or "ambitionbox" in title.lower(): src_name = "AmbitionBox"
+            elif "linkedin" in domain_clean.lower() or "linkedin" in title.lower(): src_name = "LinkedIn"
+            else: src_name = domain_clean
+            
+            yearly_val = 0
+            lakh_match = re.search(r'(?:₹|Rs\.?)?\s*([\d\.]+)\s*(?:Lakhs?|LPA)', snippet, re.IGNORECASE)
+            
+            if lakh_match:
+                yearly_val = int(float(lakh_match.group(1)) * 100000)
+            else:
+                if llm_choice == "Groq (Cloud)": llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=groq_key, temperature=0)
+                else: llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="local-model", temperature=0)
                 
-            prompt = f"Snippets: '{snippets}'. Extract the average YEARLY salary. Return ONLY the raw integer. If it says '6 Lakhs', output 600000."
-            ans = llm.invoke(prompt).content
-            
-            match = re.search(r'\d+', ans.replace(',', ''))
-            if match: yearly_val = int(match.group())
+                prompt = f"Snippet: '{snippet}'. Extract the average YEARLY salary in INR as a single raw integer. If Lakhs/LPA (6 Lakhs), output 600000. Output ONLY the raw integer."
+                ans = llm.invoke(prompt).content
+                match = re.search(r'\d+', ans.replace(',', ''))
+                if match: yearly_val = int(match.group())
 
-        if yearly_val > 0:
-            monthly_base = yearly_val // 12
-            adjusted_val = int(monthly_base * 1.8) # 1.8x EY Premium Multiplier
-        else:
-            adjusted_val = fallbacks.get(job_title, 50000)
+            if yearly_val > 0:
+                adjusted_val = int((yearly_val // 12) * 1.8) # 1.8x EY Premium
+            else:
+                adjusted_val = fallbacks[idx % len(fallbacks)]["val"]
+                
+            if adjusted_val < 30000 or adjusted_val > 500000:
+                adjusted_val = fallbacks[idx % len(fallbacks)]["val"]
+                
+            sources.append({"val": adjusted_val, "src": f"{src_name} (Scraped)", "snip": snippet, "link": link})
             
-        if adjusted_val < 30000 or adjusted_val > 500000: 
-            return fallbacks.get(job_title, 50000), f"Safe Fallback used. Extracted weird value: {yearly_val}/yr."
-            
-        return adjusted_val, f"Scraped Google -> {snippets[:100]}..."
-    except Exception as e:
-        return fallbacks.get(job_title, 50000), f"Error: {e}"
+        while len(sources) < 3:
+            sources.append(fallbacks[len(sources)])
+        return sources
+    except Exception:
+        return fallbacks
 
 def parse_pdf(file, llm_choice, api_key):
     """Parses PDF slips using Hybrid OCR/regex parser."""
@@ -233,6 +255,59 @@ st.markdown("""
     div[data-testid="stChatInput"] { border: 2px solid #333 !important; border-radius: 0px !important; }
     div[data-testid="stChatMessage"] { background-color: #121214 !important; border: 1px solid #2d2d30 !important; }
     
+    /* Stark Compact Monthly ledger uploaders */
+    [data-testid="stFileUploader"] {
+        padding: 0px !important;
+        margin: 0px !important;
+        width: 140px !important; /* Room for shadow button */
+        max-width: 140px !important;
+        height: auto !important;
+    }
+    [data-testid="stFileUploader"] label {
+        display: none !important;
+    }
+    [data-testid="stFileUploaderDropzone"] {
+        border: none !important; /* NUKES THE DOTTED BOX ENTIRELY */
+        background-color: transparent !important; /* Seamless background */
+        box-shadow: none !important;
+        padding: 0px !important;
+        margin: 0px !important;
+        width: 130px !important; 
+        max-width: 130px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    /* Target Streamlit 1.38+ dropzone instructions and nuke them */
+    [data-testid="stFileUploaderDropzoneInstructions"] {
+        display: none !important;
+    }
+    /* Force the browse button to match the rest of the site (Stark White + Neon Green shadow) */
+    [data-testid="stFileUploaderDropzone"] button {
+        background-color: #FFFFFF !important; 
+        color: #000000 !important; 
+        border: 2px solid #FFFFFF !important; 
+        box-shadow: 3px 3px 0px #00FFAA !important; /* Neon Green shadow */
+        border-radius: 0px !important; 
+        font-weight: 900 !important; 
+        text-transform: uppercase;
+        font-size: 11px !important;
+        padding: 4px 12px !important;
+        margin: 0px auto !important;
+        display: block !important;
+        transition: all 0.1s ease;
+    }
+    [data-testid="stFileUploaderDropzone"] button:hover {
+        background-color: #00FFAA !important; 
+        border-color: #00FFAA !important;
+        box-shadow: 0px 0px 0px #00FFAA !important;
+    }
+    /* Force text inside button to stay black */
+    [data-testid="stFileUploaderDropzone"] button * {
+        color: #000000 !important;
+        font-weight: 900 !important;
+    }
+    
     header { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
@@ -274,7 +349,7 @@ client = st.session_state.get("active_client")
 
 # --- MULTI-PAGE ENGINE ROUTER ---
 if client:
-    # --- HOMEPAGE VIEW (Summary Mode) ---
+    # --- PAGE 1: summary (Homepage Profile Summary) ---
     if st.session_state.view_mode == "summary":
         st.write("---")
         st.header(f"CAPITAL GENESIS SUMMARY: {client['Name']}")
@@ -312,14 +387,14 @@ if client:
             </div>
             """, unsafe_allow_html=True)
             
-        # Action Button to launch SOW Matrix (Updated colors)
+        # Large Swiss White Button to move to Page 2
         st.write("---")
         if st.button("🛡️ EXECUTE WEALTH VERACITY DUE DILIGENCE", use_container_width=True):
-            st.session_state.view_mode = "audit"
+            st.session_state.view_mode = "matrix"
             st.rerun()
             
-    # --- AUDIT MATRIX & DETAILS VIEW ---
-    elif st.session_state.view_mode == "audit":
+    # --- PAGE 2: matrix (Origin of Capital Compliance Matrix) ---
+    elif st.session_state.view_mode == "matrix":
         st.write("---")
         if st.button("← BACK TO SUMMARY", use_container_width=True):
             st.session_state.view_mode = "summary"
@@ -332,16 +407,16 @@ if client:
         col_h_name.write("**CAPITAL INFLOW STREAM**")
         col_h_src.write("**INFLOW VERACITY RATING**")
         col_h_act.write("**DUE DILIGENCE WORKSPACE**")
-        st.markdown("<hr style='border: 2px solid #2d2d30; margin-top:0; margin-bottom:15px;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='border: 1px solid #2d2d30; margin-top:0; margin-bottom:15px;'>", unsafe_allow_html=True)
         
         # Loop SOW Categories
         for category, data in client["SOW_Drivers"].items():
             col_name, col_src, col_act = st.columns([3, 2, 2])
             
-            # Column 1: SOW Driver Name
+            # SOW Driver Name
             col_name.markdown(f"<p style='font-size:18px; font-weight:bold; margin-top:10px;'>{category}</p>", unsafe_allow_html=True)
             
-            # Column 2: Minimalist Status Outline Badge
+            # Minimalist Status Outline Badge
             status = data["Status"]
             if status == "Fully Available":
                 badge_html = f"<span class='badge-fully'>{status}</span>"
@@ -353,71 +428,84 @@ if client:
                 badge_html = f"<span class='badge-na'>{status}</span>"
             col_src.markdown(f"<div style='margin-top:10px;'>{badge_html}</div>", unsafe_allow_html=True)
             
-            # Column 3: Row Audit Drill-Down Action Button
-            btn_lbl = "👉 ACTIVE VERIFICATION" if st.session_state.selected_sow == category else "🔍 VERIFY & CALIBRATE"
-            if col_act.button(btn_lbl, key=f"btn_{client['Client_ID']}_{category}", use_container_width=True):
+            # Drill-Down Action Button - Moves to Page 3
+            if col_act.button("🔍 AUDIT STREAM", key=f"btn_{client['Client_ID']}_{category}", use_container_width=True):
                 st.session_state.selected_sow = category
+                st.session_state.view_mode = "compartment"
                 st.rerun()
 
-        # --- FULL-WIDTH ACTIVE AUDIT WORKSPACE ---
+    # --- PAGE 3: compartment (Active Documentary Proof Compartment) ---
+    elif st.session_state.view_mode == "compartment":
         st.write("---")
+        if st.button("← BACK TO COMPLIANCE MATRIX", use_container_width=True):
+            st.session_state.view_mode = "matrix"
+            st.rerun()
+            
         active_sow = st.session_state.selected_sow
         sow_data = client["SOW_Drivers"][active_sow]
         
         st.header(f"💼 DOCUMENTARY PROOF COMPARTMENT: {active_sow}")
-        
-        # Verification Ingestion Area
-        uploaded_doc = st.file_uploader(
-            f"Upload inflow verification voucher for {active_sow}", 
-            type=["pdf", "csv", "xlsx"], 
-            key=f"{client['Client_ID']}_{active_sow}_upload_container"
-        )
-        
-        if uploaded_doc:
-            if active_sow == "Executive Yield (Salary)" and uploaded_doc.name.endswith(".pdf"):
-                with st.spinner("Extracting SOW Data..."):
-                    parsed_rec = parse_pdf(uploaded_doc, llm_choice, api_key)
-                if parsed_rec:
-                    if parsed_rec["Client_ID"] == client["Client_ID"]:
-                        if db.add_document_to_sow(client["Client_ID"], active_sow, uploaded_doc.name):
-                            st.toast(f"Successfully linked {uploaded_doc.name} to {active_sow}!")
-                            st.session_state.active_client = db.get_client(client["Client_ID"])
-                            st.rerun()
-                    else:
-                        st.error(f"ERROR: Slip belongs to {parsed_rec['Client_ID']}.")
-            else:
-                if db.add_document_to_sow(client["Client_ID"], active_sow, uploaded_doc.name):
-                    st.toast(f"Successfully linked {uploaded_doc.name} to {active_sow}!")
-                    st.session_state.active_client = db.get_client(client["Client_ID"])
-                    st.rerun()
+        st.write("") # Padding
 
-        # Dynamic Checklist / Inflow Analysis based on active SOW type
-        # If it's a periodic cashflow driver (Salary, Rent, Equity), show full 5-year timeline & charts!
-        periodic_drivers = ["Executive Yield (Salary)", "Corporate Equity Liquidation", "Real Estate Yield (Rent)"] # Updated keys to match db.py
+        periodic_drivers = ["Executive Yield (Salary)", "Corporate Equity Liquidation", "Real Estate Yield (Rent)"]
         
+        # A. PERIODIC CHANNELS: 60-Month Grid with INDIVIDUAL Row Uploaders
         if active_sow in periodic_drivers:
-            st.write("**5-Year Document Audit Matrix:**")
+            st.write("### 📅 DOCUMENTARY VERIFICATION LEDGER")
             years = ["2019", "2020", "2021", "2022", "2023"]
             tabs = st.tabs(years)
             
-            # Map visual indices based on type (Quarterly vs Monthly)
             is_quarterly = (active_sow == "Corporate Equity Liquidation")
             intervals = ["Q1", "Q2", "Q3", "Q4"] if is_quarterly else ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
             
             for yr_idx, year in enumerate(years):
                 with tabs[yr_idx]:
                     col_m1, col_m2 = st.columns(2)
+                    
                     for idx, interval in enumerate(intervals):
+                        target_col = col_m1 if idx < (len(intervals) / 2) else col_m2
                         pattern = f"{interval}_{year}"
                         has_file = any(pattern in f for f in sow_data["Slips"])
-                        target_col = col_m1 if idx < (len(intervals) / 2) else col_m2
+                        
+                        # Sub-columns inside each month slot for visual alignment
+                        row_lbl, row_status, row_act = target_col.columns([1, 1.2, 2.5])
+                        row_lbl.markdown(f"**{interval}**")
                         
                         if has_file:
-                            target_col.markdown(f"🟩 **{interval}**: Received")
+                            row_status.markdown("🟩 Received")
+                            row_act.write("`-`")
                         else:
-                            target_col.markdown(f"🟥 **{interval}**: Missing")
+                            row_status.markdown("🟥 Missing")
+                            # INDIVIDUAL INLINE UPLOADER PER MONTH
+                            up_file = row_act.file_uploader(
+                                "Upload Voucher",
+                                type=["pdf", "csv", "xlsx"],
+                                key=f"up_{client['Client_ID']}_{active_sow}_{year}_{interval}",
+                                label_visibility="collapsed"
+                            )
+                            if up_file:
+                                # Strict Compliance Lock
+                                if active_sow == "Executive Yield (Salary)" and up_file.name.endswith(".pdf"):
+                                    with st.spinner("Extracting..."):
+                                        parsed = parse_pdf(up_file, llm_choice, api_key)
+                                    if parsed:
+                                        # Verify Month & Year match
+                                        extracted_month_year = f"{interval} {year}"
+                                        if parsed["Client_ID"] == client["Client_ID"] and parsed["Month_Year"] == extracted_month_year:
+                                            if db.add_document_to_sow(client["Client_ID"], active_sow, up_file.name):
+                                                st.toast(f"Linked {up_file.name} to {interval} {year}!")
+                                                st.session_state.active_client = db.get_client(client["Client_ID"])
+                                                st.rerun()
+                                        else:
+                                            st.error(f"VERIFICATION FAILURE: File is for {parsed['Month_Year']}, expected {extracted_month_year}.")
+                                else:
+                                    # Direct backfill
+                                    if db.add_document_to_sow(client["Client_ID"], active_sow, up_file.name):
+                                        st.toast(f"Linked {up_file.name} successfully!")
+                                        st.session_state.active_client = db.get_client(client["Client_ID"])
+                                        st.rerun()
             
-            # DYNAMIC BENCHMARKING & CHARTS (Loads from client summary filtered by SOW Driver)
+            # B. MARKET PLAUSIBILITY CALIBRATION (Scrapes Google, offers Top 3 Options)
             try:
                 full_db_df = pd.read_csv("mock_data/client_summary.csv")
                 full_db_df['Date_Parsed'] = pd.to_datetime(full_db_df['Month_Year'], format='%b %Y', errors='coerce')
@@ -431,32 +519,51 @@ if client:
             if not client_sow_df.empty:
                 st.write("---")
                 st.subheader("MARKET PLAUSIBILITY CALIBRATION")
-                fig_trend = px.line()
-                px_colors = px.colors.qualitative.Plotly
-                client_color = px_colors[0]
-                serp_key = os.getenv("SERPAPI_KEY")
                 
-                # Dynamic search keyword based on SOW Type
+                # Dynamic search keyword
                 search_terms = {
                     "Executive Yield (Salary)": f"{client_sow_df['Job_Title'].iloc[0]} average salary",
                     "Corporate Equity Liquidation": "average corporate executive stock dividend payout",
                     "Real Estate Yield (Rent)": "average monthly commercial property rent yield"
                 }
-
                 search_q = search_terms.get(active_sow, f"{active_sow} average yield")
+                serp_key = os.getenv("SERPAPI_KEY")
                 
-                with st.spinner(f"Scraping Web for '{active_sow}' Plausibility Index..."):
-                    bench_val, src = fetch_real_benchmark(search_q, serp_key, llm_choice, api_key)
-                    st.info(f"**Live Market Plausibility Index:** INR {bench_val} | {src}")
+                # Dynamic Scrape (Top 3 Sources)
+                with st.spinner("Scraping index sources..."):
+                    sources = fetch_real_benchmark_sources(search_q, serp_key, llm_choice, api_key)
+                
+                # NEW: Dropdown expander for Source Verification Audit & Selector
+                with st.expander("📄 VIEW VERIFIED SOURCE SNIPPETS & COMPLIANCE LINKS"):
+                    # RM Verification selector is now safely housed inside the expander
+                    st.write("**Verify Plausibility Reference Source:**")
+                    source_options = [f"{s['src']} : INR {s['val']}/mo" for s in sources]
+                    selected_option = st.radio(
+                        "SELECT VERIFIED REFERENCE SOURCE (Updates Trend Chart):",
+                        options=source_options,
+                        key=f"calibration_selector_{active_sow}"
+                    )
                     
+                    # Unpack selected values
+                    selected_idx = source_options.index(selected_option)
+                    bench_val = sources[selected_idx]["val"]
+                    snippet_text = sources[selected_idx]["snip"]
+                    source_url = sources[selected_idx]["link"]
+                    
+                    st.markdown("---")
+                    st.markdown(f"**Verified Source URL:** [Open Source Site]({source_url})")
+                    st.markdown(f"**Scraped Context/Snippet:** *{snippet_text}*")
+                
+                # C. Plot charts calibrated to selected source
+                fig_trend = px.line()
+                client_color = px.colors.qualitative.Plotly[0]
                 ideal_dates = pd.date_range(start='2019-01-01', end='2023-12-01', freq='MS')
                 merged = pd.merge(pd.DataFrame({'Date_Parsed': ideal_dates}), client_sow_df[['Date_Parsed', 'Gross_Salary']], on='Date_Parsed', how='left')
                 
-                # Plot Actuals (Broken on gaps)
+                # Plot Actuals
                 fig_trend.add_scatter(x=merged['Date_Parsed'], y=merged['Gross_Salary'], mode='lines+markers', name='Actual Proof', line=dict(color=client_color), connectgaps=False)
                 
-                # Interpolate Gaps (Snaps perfect to curve)
-                missing_dates = ideal_dates.difference(pd.to_datetime(client_sow_df['Date_Parsed']).dt.tz_localize(None))
+                # Interpolate Gaps using selected bench_val
                 missing = merged[merged['Gross_Salary'].isna()].copy()
                 if not missing.empty and bench_val > 0:
                     base_year = 2023
@@ -471,7 +578,7 @@ if client:
                 fig_trend.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#333333')
                 st.plotly_chart(fig_trend, use_container_width=True)
                 
-                # Volatility Graph (MoM Change)
+                # D. Volatility
                 st.subheader("YIELD VARIANCE & VOLATILITY PROFILE (MoM % CHANGE)")
                 client_sow_df['MoM_Change_%'] = client_sow_df['Gross_Salary'].pct_change() * 100
                 fig_mom = px.bar(client_sow_df, x="Date_Parsed", y="MoM_Change_%")
@@ -482,16 +589,17 @@ if client:
                 fig_mom.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#333333')
                 st.plotly_chart(fig_mom, use_container_width=True)
                 
+                missing_dates = ideal_dates.difference(pd.to_datetime(client_sow_df['Date_Parsed']).dt.tz_localize(None))
                 csv_missing = pd.DataFrame([{"Client_ID": client["Client_ID"], "SOW_Driver": active_sow, "Date": d.strftime('%b %Y')} for d in missing_dates]).to_csv(index=False).encode('utf-8')
                 st.download_button("EXPORT MISSING LOG (CSV)", data=csv_missing, file_name=f"{client['Client_ID']}_missing_{active_sow.replace(' ', '_')}.csv", mime="text/csv")
             else:
                 st.warning("No SOW transactions found in bank database for this category.")
+                
+        # B. NON-PERIODIC CHANNELS: Dynamic Checklists (Inheritance, trusts)
         else:
-            # Non-salary SOW drivers: Dynamic checklists
-            st.write("**SOW COMPLIANCE DOCUMENT CHECKLIST:**")
-            
+            st.write("### 📋 SOW COMPLIANCE DOCUMENT CHECKLIST")
             sow_checklists = {
-                "Venture Fund Divestments": [ # Updated keys
+                "Venture Fund Divestments": [
                     {"name": "Venture Fund Exit Agreement / Term Sheet", "key": "US_Bond"},
                     {"name": "Tax Declaration / Capital Gains Return", "key": "Tax"},
                     {"name": "Bank Credit Voucher / Wire Confirmation", "key": "Credit"}

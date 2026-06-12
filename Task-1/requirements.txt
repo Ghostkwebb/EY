@@ -1,0 +1,13 @@
+streamlit
+pandas
+pdfplumber
+plotly
+python-dotenv
+langchain-groq
+langchain-experimental
+langchain-openai
+pydantic
+google-search-results
+reportlab
+python-dateutil
+openpyxl
