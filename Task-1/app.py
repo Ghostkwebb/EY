@@ -17,6 +17,494 @@ from serpapi import GoogleSearch
 # --- SETUP ---
 load_dotenv()
 st.set_page_config(page_title="Origin of Capital Portal", layout="wide")
+
+# --- INJECT LIGHT/DARK MODE TOGGLE ---
+st.components.v1.html("""
+<script>
+const parentDoc = window.parent.document;
+
+const sunSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>`;
+const moonSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`;
+
+async function toggleTheme(event) {
+    const currentTheme = parentDoc.documentElement.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    if (!parentDoc.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        parentDoc.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateButtonIcon(newTheme);
+        return;
+    }
+    
+    const x = event.clientX;
+    const y = event.clientY;
+    
+    const endRadius = Math.hypot(
+        Math.max(x, window.parent.innerWidth - x),
+        Math.max(y, window.parent.innerHeight - y)
+    );
+    
+    const transition = parentDoc.startViewTransition(() => {
+        parentDoc.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateButtonIcon(newTheme);
+    });
+    
+    await transition.ready;
+    
+    parentDoc.documentElement.animate(
+        {
+            clipPath: [
+                `circle(0px at ${x}px ${y}px)`,
+                `circle(${endRadius}px at ${x}px ${y}px)`
+            ]
+        },
+        {
+            duration: 600,
+            easing: 'ease-in-out',
+            pseudoElement: '::view-transition-new(root)'
+        }
+    );
+}
+
+function updateButtonIcon(theme) {
+    const btn = parentDoc.getElementById('theme-toggle-btn');
+    if (btn) {
+        btn.innerHTML = theme === 'light' ? moonSvg : sunSvg;
+        btn.setAttribute('title', theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode');
+    }
+}
+
+function initThemeToggle() {
+    if (!parentDoc.getElementById('theme-transitions-style')) {
+        const style = parentDoc.createElement('style');
+        style.id = 'theme-transitions-style';
+        style.textContent = `
+            ::view-transition-old(root),
+            ::view-transition-new(root) {
+                animation: none;
+                mix-blend-mode: normal;
+            }
+            ::view-transition-group(root) {
+                animation-duration: 0.6s;
+            }
+            
+            #theme-toggle-btn {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999999;
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                background-color: var(--btn-bg) !important;
+                color: var(--btn-color) !important;
+                border: 2px solid var(--btn-border) !important;
+                box-shadow: 3px 3px 0px var(--btn-shadow) !important;
+                transition: all 0.1s ease;
+            }
+            #theme-toggle-btn:hover {
+                box-shadow: 0px 0px 0px var(--btn-shadow) !important;
+                transform: translate(2px, 2px);
+            }
+            #theme-toggle-btn svg {
+                width: 20px;
+                height: 20px;
+                stroke: currentColor;
+            }
+        `;
+        parentDoc.head.appendChild(style);
+    }
+    
+    if (!parentDoc.getElementById('theme-toggle-btn')) {
+        const btn = parentDoc.createElement('div');
+        btn.id = 'theme-toggle-btn';
+        parentDoc.body.appendChild(btn);
+        btn.addEventListener('click', toggleTheme);
+    }
+    
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    parentDoc.documentElement.setAttribute('data-theme', savedTheme);
+    updateButtonIcon(savedTheme);
+}
+
+initThemeToggle();
+</script>
+""", height=0)
+
+# --- STARK SWISS NEO-BRUTALIST STYLING ---
+st.markdown("""
+<style>
+    /* CSS Variables for Light/Dark Mode */
+    :root {
+        --bg-color: #080808;
+        --text-color: #FFFFFF;
+        --card-bg: #121318;
+        --border-color: #2d2d30;
+        --chat-msg-bg: #121214;
+        --tab-bg: #1E1E1E;
+        --tab-border: #555555;
+        --tab-inactive-text: #888888;
+        --tab-active-border: #FFFFFF;
+        --input-bg: #16171d;
+        --meta-label: #8a8a8f;
+        --gold-text: #FFDF00;
+        
+        --btn-bg: #FFFFFF;
+        --btn-color: #000000;
+        --btn-border: #FFFFFF;
+        --btn-shadow: #00D2FF;
+    }
+
+    [data-theme="light"] {
+        --bg-color: #F5F5F7;
+        --text-color: #1D1D1F;
+        --card-bg: #FFFFFF;
+        --border-color: #E2E2E7;
+        --chat-msg-bg: #EAEAEF;
+        --tab-bg: #EAEAEF;
+        --tab-border: #D1D1D6;
+        --tab-inactive-text: #6E6E73;
+        --tab-active-border: #000000;
+        --input-bg: #FFFFFF;
+        --meta-label: #6E6E73;
+        --gold-text: #B28600;
+        
+        --btn-bg: #000000;
+        --btn-color: #FFFFFF;
+        --btn-border: #000000;
+        --btn-shadow: #1E60FF;
+    }
+
+    /* Global Swiss Base Reset */
+    div[data-testid="stChatMessage"] { background-color: var(--chat-msg-bg) !important; border: 2px solid var(--border-color) !important; padding: 10px !important; margin-bottom: 10px !important; }
+    div[data-testid="stChatMessage"] * { color: var(--text-color) !important; }
+    
+    .stApp, .main, .stAppViewContainer { background-color: var(--bg-color) !important; font-family: 'Courier New', monospace !important; }
+    h1, h2, h3, h4, p, span, label, div, li, summary, input { color: var(--text-color) !important; }
+    
+    /* Clean Swiss Typography - CENTERED & BLUE ACCENT */
+    h1 { 
+        text-align: center !important; 
+        font-family: 'Helvetica Neue', Arial, sans-serif !important; 
+        font-weight: 900 !important; 
+        text-transform: uppercase; 
+        border-bottom: 5px solid #1E60FF !important; /* Swiss Electric Blue bottom line */
+        padding-bottom: 15px !important; 
+        margin-bottom: 40px !important; 
+    }
+    h2, h3 { font-family: 'Helvetica Neue', Arial, sans-serif !important; font-weight: 800 !important; text-transform: uppercase; }
+
+    /* Client Profile Card - Electric Blue top border */
+    .profile-card {
+        background-color: var(--card-bg) !important; /* Deep slate blue/charcoal tint */
+        border: 1px solid var(--border-color) !important;
+        border-top: 4px solid #1E60FF !important; /* Blue top border */
+        padding: 24px !important;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 5px 5px 0px var(--btn-shadow);
+    }
+    .profile-meta-item {
+        border-bottom: 1px solid var(--border-color);
+        padding: 8px 0;
+        display: flex;
+        justify-content: space-between;
+    }
+    .profile-meta-item b { color: var(--meta-label); }
+
+    /* High Visibility Search Box - Electric Blue & Cyan Shadow */
+    div[data-baseweb="select"] > div {
+        background-color: var(--input-bg) !important;
+        border: 2px solid #1E60FF !important; /* Blue Border */
+        box-shadow: 4px 4px 0px var(--btn-shadow) !important; /* Cyan drop shadow */
+        border-radius: 0px !important;
+        height: 50px !important;
+    }
+    div[data-baseweb="select"] * {
+        color: var(--text-color) !important;
+        font-weight: bold !important;
+        font-size: 16px !important;
+    }
+
+    /* Minimalist Outline Badges */
+    .badge-fully { border: 1px solid #00FFCC; color: #00FFCC !important; padding: 4px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
+    .badge-partially { border: 1px solid #1E60FF; color: #1E60FF !important; padding: 4px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
+    .badge-not { border: 1px solid #FF003C; color: #FF003C !important; padding: 4px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
+    .badge-na { border: 1px solid #555555; color: var(--meta-label) !important; padding: 4px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
+
+    /* Streamlit components */
+    [data-testid="stExpander"] details, [data-testid="stExpander"] summary, div[data-baseweb="input"] > div, [data-testid="stChatInput"] {
+        background-color: var(--chat-msg-bg) !important; border: 1px solid var(--border-color) !important; border-radius: 0px !important;
+    }
+    [data-testid="stExpander"] { border: 1px solid var(--border-color) !important; border-radius: 0px !important; }
+    
+    /* Swiss Stark White Buttons with Cyan Shadow */
+    .stButton>button, .stDownloadButton>button { 
+        background-color: var(--btn-bg) !important; 
+        color: var(--btn-color) !important; 
+        border: 2px solid var(--btn-border) !important; 
+        box-shadow: 4px 4px 0px var(--btn-shadow) !important; 
+        border-radius: 0px !important; 
+        font-weight: 900 !important; 
+        text-transform: uppercase;
+        font-size: 14px !important;
+        transition: all 0.1s ease;
+    }
+    /* Force all text elements inside button to be black */
+    .stButton>button *, .stDownloadButton>button * {
+        color: var(--btn-color) !important;
+        font-weight: 900 !important;
+    }
+    .stButton>button:hover, .stDownloadButton>button:hover {
+        background-color: var(--btn-shadow) !important; 
+        border-color: var(--btn-shadow) !important;
+        box-shadow: 0px 0px 0px var(--btn-shadow) !important;
+    }
+    /* Force text inside button to stay black on hover */
+    .stButton>button:hover *, .stDownloadButton>button:hover * {
+        color: #000000 !important;
+    }
+    .stButton>button:active { transform: translate(4px, 4px); }
+
+    /* Visual Tabs - Centered blue accents */
+    button[role="tab"] { 
+        background-color: var(--tab-bg) !important; 
+        border: 2px solid var(--tab-border) !important; 
+        border-bottom: 2px solid var(--text-color) !important; 
+        border-radius: 10px 10px 0px 0px !important; 
+        margin-right: 5px !important; 
+        padding: 10px 25px !important;
+        transition: all 0.3s;
+    }
+    button[role="tab"] * { color: var(--tab-inactive-text) !important; font-weight: bold !important; }
+    button[role="tab"]:hover { background-color: var(--border-color) !important; }
+    button[role="tab"]:hover * { color: var(--text-color) !important; }
+    
+    button[role="tab"][aria-selected="true"] { 
+        background-color: #1E60FF !important; 
+        border: 4px solid var(--tab-active-border) !important; 
+        border-bottom: 4px solid #1E60FF !important; 
+        transform: translateY(4px); 
+        z-index: 10;
+    }
+    button[role="tab"][aria-selected="true"] * { color: #FFFFFF !important; font-weight: 900 !important; }
+    
+    /* Content box under tabs */
+    div[data-testid="stTabs"] { 
+        border-top: 4px solid var(--text-color) !important; 
+        margin-top: -4px; 
+        padding-top: 20px; 
+    }
+
+    /* Popover Floating Chat - Blue Theme */
+    div[data-testid="stPopover"] { 
+        position: fixed !important; 
+        bottom: 30px !important; 
+        right: 30px !important; 
+        z-index: 99999 !important; 
+        width: fit-content !important; 
+    }
+    div[data-testid="stPopover"] button[data-testid="stPopoverButton"] { 
+        background-color: var(--bg-color) !important; 
+        color: var(--btn-shadow) !important; 
+        border: 2px solid var(--btn-shadow) !important; 
+        border-radius: 50px !important; 
+        padding: 10px 25px !important; 
+        font-size: 16px !important; 
+        box-shadow: 0px 0px 15px rgba(0, 210, 255, 0.3) !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    div[data-testid="stPopover"] button[data-testid="stPopoverButton"] * {
+        color: var(--btn-shadow) !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    div[data-testid="stPopover"] button[data-testid="stPopoverButton"]:hover {
+        background-color: var(--btn-shadow) !important;
+        border-color: var(--btn-shadow) !important;
+    }
+    div[data-testid="stPopover"] button[data-testid="stPopoverButton"]:hover * {
+        color: var(--bg-color) !important;
+    }
+    div[data-testid="stPopoverBody"] { 
+        background-color: var(--bg-color) !important; 
+        border: 4px solid var(--btn-shadow) !important; 
+        box-shadow: 8px 8px 0px var(--btn-shadow) !important; 
+        border-radius: 0px !important; 
+        width: 380px !important; 
+    }
+    /* Internal scroll and structural boxes in Popover Body */
+    div[data-testid="stPopoverBody"] .stVerticalBlock,
+    div[data-testid="stPopoverBody"] [data-testid="stLayoutWrapper"],
+    div[data-testid="stPopoverBody"] div.st-er {
+        background-color: var(--bg-color) !important;
+    }
+    /* Popover chat input box override */
+    div[data-testid="stChatInput"],
+    div[data-testid="stChatInput"] div,
+    div[data-testid="stChatInput"] textarea {
+        background-color: var(--input-bg) !important;
+        color: var(--text-color) !important;
+    }
+    /* Force high-visibility placeholder */
+    div[data-testid="stChatInput"] textarea::placeholder {
+        color: var(--meta-label) !important;
+        opacity: 1 !important;
+    }
+    div[data-testid="stChatInput"] { 
+        border: 2px solid var(--border-color) !important; 
+        border-radius: 0px !important; 
+    }
+    /* Prevent default Streamlit red focus ring/border */
+    div[data-testid="stChatInput"] [data-baseweb="textarea"]:focus-within {
+        border-color: var(--btn-shadow) !important;
+        box-shadow: 0 0 0 2px var(--btn-shadow) !important;
+    }
+    /* Send button on chat input */
+    button[data-testid="stChatInputSubmitButton"] {
+        background-color: transparent !important;
+        border: none !important;
+    }
+    button[data-testid="stChatInputSubmitButton"] svg {
+        fill: var(--text-color) !important;
+    }
+    button[data-testid="stChatInputSubmitButton"]:hover {
+        background-color: transparent !important;
+    }
+    button[data-testid="stChatInputSubmitButton"]:hover svg {
+        fill: var(--btn-shadow) !important;
+    }
+    div[data-testid="stChatMessage"] { 
+        background-color: var(--chat-msg-bg) !important; 
+        border: 1px solid var(--border-color) !important; 
+    }
+    
+    /* Selectbox Virtual Dropdown Styles */
+    ul[data-testid="stSelectboxVirtualDropdown"] {
+        background-color: var(--card-bg) !important;
+        border: 2px solid var(--border-color) !important;
+        box-shadow: 4px 4px 0px var(--btn-shadow) !important;
+        border-radius: 0px !important;
+    }
+    ul[data-testid="stSelectboxVirtualDropdown"] li {
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
+        font-family: 'Courier New', monospace !important;
+    }
+    ul[data-testid="stSelectboxVirtualDropdown"] li:hover,
+    ul[data-testid="stSelectboxVirtualDropdown"] li[aria-selected="true"] {
+        background-color: var(--border-color) !important;
+    }
+    ul[data-testid="stSelectboxVirtualDropdown"] li * {
+        color: var(--text-color) !important;
+    }
+    ul[data-testid="stSelectboxVirtualDropdown"] li[aria-selected="true"] * {
+        font-weight: bold !important;
+    }
+    
+    /* Stark Compact Monthly ledger uploaders */
+    [data-testid="stFileUploader"] {
+        padding: 0px !important;
+        margin: 0px !important;
+        width: 140px !important; /* Room for shadow button */
+        max-width: 140px !important;
+        height: auto !important;
+    }
+    [data-testid="stFileUploader"] label {
+        display: none !important;
+    }
+    [data-testid="stFileUploaderDropzone"] {
+        border: none !important; /* NUKES THE DOTTED BOX ENTIRELY */
+        background-color: transparent !important; /* Seamless background */
+        box-shadow: none !important;
+        padding: 0px !important;
+        margin: 0px !important;
+        width: 130px !important; 
+        max-width: 130px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    /* Target Streamlit 1.38+ dropzone instructions and nuke them */
+    [data-testid="stFileUploaderDropzoneInstructions"] {
+        display: none !important;
+    }
+    /* Force the browse button to match the rest of the site (Stark White + Neon Green shadow) */
+    [data-testid="stFileUploaderDropzone"] button {
+        background-color: var(--btn-bg) !important; 
+        color: var(--btn-color) !important; 
+        border: 2px solid var(--btn-border) !important; 
+        box-shadow: 3px 3px 0px #00FFAA !important; /* Neon Green shadow */
+        border-radius: 0px !important; 
+        font-weight: 900 !important; 
+        text-transform: uppercase;
+        font-size: 11px !important;
+        padding: 4px 12px !important;
+        margin: 0px auto !important;
+        display: block !important;
+        transition: all 0.1s ease;
+    }
+    [data-testid="stFileUploaderDropzone"] button:hover {
+        background-color: #00FFAA !important; 
+        border-color: #00FFAA !important;
+        box-shadow: 0px 0px 0px #00FFAA !important;
+    }
+    /* Force text inside button to match button color */
+    [data-testid="stFileUploaderDropzone"] button * {
+        color: var(--btn-color) !important;
+        font-weight: 900 !important;
+        transition: all 0.1s ease !important;
+    }
+    /* Force text inside button to stay black on hover (since background becomes Neon Green) */
+    [data-testid="stFileUploaderDropzone"] button:hover * {
+        color: #000000 !important;
+    }
+    
+    /* Dynamic Plotly overrides for Light/Dark mode compatibility */
+    .js-plotly-plot .main-svg text:not(.hovertext):not(.legendtext):not(.legendtitletext):not(.nums):not(.name) {
+        fill: var(--text-color) !important;
+    }
+    .js-plotly-plot .main-svg g.infolayer text.legendtext,
+    .js-plotly-plot .main-svg g.infolayer text.legendtitletext {
+        fill: var(--text-color) !important;
+    }
+    .js-plotly-plot .main-svg text.annotation-text {
+        fill: var(--text-color) !important;
+    }
+    /* Extremely specific and robust overrides for hover tooltips (force white on dark tooltip backgrounds) */
+    .js-plotly-plot .plot-container g.hoverlayer text,
+    .js-plotly-plot .plot-container g.hoverlayer text *,
+    .js-plotly-plot .plot-container g.hoverlayer text.legendtext,
+    .js-plotly-plot .plot-container g.hoverlayer text.legendtitletext,
+    .js-plotly-plot .plot-container g.hoverlayer text.nums,
+    .js-plotly-plot .plot-container g.hoverlayer text.name,
+    .js-plotly-plot .main-svg g.hoverlayer text,
+    .js-plotly-plot .main-svg g.hoverlayer text * {
+        fill: #FFFFFF !important;
+        color: #FFFFFF !important;
+    }
+    .js-plotly-plot .main-svg path.xgrid,
+    .js-plotly-plot .main-svg path.ygrid {
+        stroke: var(--border-color) !important;
+        stroke-opacity: 0.4 !important;
+    }
+    .js-plotly-plot .main-svg path.zl {
+        stroke: var(--border-color) !important;
+        stroke-opacity: 0.7 !important;
+    }
+    
+    header { visibility: hidden; }
+</style>
+""", unsafe_allow_html=True)
+
+
 db.init_db()  
 auth.check_auth()
 
@@ -120,197 +608,7 @@ def parse_pdf(file, llm_choice, api_key):
         try: return llm.with_structured_output(SalaryData).invoke(f"Extract details.\n\nText: {text}").model_dump()
         except Exception: return None
 
-# --- STARK SWISS NEO-BRUTALIST STYLING ---
-st.markdown("""
-<style>
-    /* Global Swiss Base Reset */
-    div[data-testid="stChatMessage"] { background-color: #121214 !important; border: 2px solid #333 !important; padding: 10px !important; margin-bottom: 10px !important; }
-    div[data-testid="stChatMessage"] * { color: #FFFFFF !important; }
-    
-    .stApp, .main, .stAppViewContainer { background-color: #080808 !important; font-family: 'Courier New', monospace !important; }
-    h1, h2, h3, h4, p, span, label, div, li, summary, input { color: #FFFFFF !important; }
-    
-    /* Clean Swiss Typography - CENTERED & BLUE ACCENT */
-    h1 { 
-        text-align: center !important; 
-        font-family: 'Helvetica Neue', Arial, sans-serif !important; 
-        font-weight: 900 !important; 
-        text-transform: uppercase; 
-        border-bottom: 5px solid #1E60FF !important; /* Swiss Electric Blue bottom line */
-        padding-bottom: 15px !important; 
-        margin-bottom: 40px !important; 
-    }
-    h2, h3 { font-family: 'Helvetica Neue', Arial, sans-serif !important; font-weight: 800 !important; text-transform: uppercase; }
 
-    /* Client Profile Card - Electric Blue top border */
-    .profile-card {
-        background-color: #121318 !important; /* Deep slate blue/charcoal tint */
-        border: 1px solid #2d2d30 !important;
-        border-top: 4px solid #1E60FF !important; /* Blue top border */
-        padding: 24px !important;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        box-shadow: 5px 5px 0px #000000;
-    }
-    .profile-meta-item {
-        border-bottom: 1px solid #2d2d30;
-        padding: 8px 0;
-        display: flex;
-        justify-content: space-between;
-    }
-    .profile-meta-item b { color: #8a8a8f; }
-
-    /* High Visibility Search Box - Electric Blue & Cyan Shadow */
-    div[data-baseweb="select"] > div {
-        background-color: #16171d !important;
-        border: 2px solid #1E60FF !important; /* Blue Border */
-        box-shadow: 4px 4px 0px #00D2FF !important; /* Cyan drop shadow */
-        border-radius: 0px !important;
-        height: 50px !important;
-    }
-    div[data-baseweb="select"] * {
-        color: #FFFFFF !important;
-        font-weight: bold !important;
-        font-size: 16px !important;
-    }
-
-    /* Minimalist Outline Badges */
-    .badge-fully { border: 1px solid #00FFCC; color: #00FFCC !important; padding: 4px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
-    .badge-partially { border: 1px solid #1E60FF; color: #1E60FF !important; padding: 4px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
-    .badge-not { border: 1px solid #FF003C; color: #FF003C !important; padding: 4px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
-    .badge-na { border: 1px solid #555555; color: #8a8a8f !important; padding: 4px 12px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
-
-    /* Streamlit components */
-    [data-testid="stExpander"] details, [data-testid="stExpander"] summary, div[data-baseweb="input"] > div, [data-testid="stChatInput"] {
-        background-color: #121214 !important; border: 1px solid #2d2d30 !important; border-radius: 0px !important;
-    }
-    [data-testid="stExpander"] { border: 1px solid #2d2d30 !important; border-radius: 0px !important; }
-    
-    /* Swiss Stark White Buttons with Cyan Shadow */
-    .stButton>button, .stDownloadButton>button { 
-        background-color: #FFFFFF !important; 
-        color: #000000 !important; 
-        border: 2px solid #FFFFFF !important; 
-        box-shadow: 4px 4px 0px #00D2FF !important; 
-        border-radius: 0px !important; 
-        font-weight: 900 !important; 
-        text-transform: uppercase;
-        font-size: 14px !important;
-        transition: all 0.1s ease;
-    }
-    /* Force all text elements inside button to be black */
-    .stButton>button *, .stDownloadButton>button * {
-        color: #000000 !important;
-        font-weight: 900 !important;
-    }
-    .stButton>button:hover, .stDownloadButton>button:hover {
-        background-color: #00D2FF !important; 
-        border-color: #00D2FF !important;
-        box-shadow: 0px 0px 0px #00D2FF !important;
-    }
-    /* Force text inside button to stay black on hover */
-    .stButton>button:hover *, .stDownloadButton>button:hover * {
-        color: #000000 !important;
-    }
-    .stButton>button:active { transform: translate(4px, 4px); }
-
-    /* Visual Tabs - Centered blue accents */
-    button[role="tab"] { 
-        background-color: #1E1E1E !important; 
-        border: 2px solid #555555 !important; 
-        border-bottom: 2px solid #FFFFFF !important; 
-        border-radius: 10px 10px 0px 0px !important; 
-        margin-right: 5px !important; 
-        padding: 10px 25px !important;
-        transition: all 0.3s;
-    }
-    button[role="tab"] * { color: #888888 !important; font-weight: bold !important; }
-    button[role="tab"]:hover { background-color: #333333 !important; }
-    button[role="tab"]:hover * { color: #FFFFFF !important; }
-    
-    button[role="tab"][aria-selected="true"] { 
-        background-color: #1E60FF !important; 
-        border: 4px solid #FFFFFF !important; 
-        border-bottom: 4px solid #1E60FF !important; 
-        transform: translateY(4px); 
-        z-index: 10;
-    }
-    button[role="tab"][aria-selected="true"] * { color: #FFFFFF !important; font-weight: 900 !important; }
-    
-    /* Content box under tabs */
-    div[data-testid="stTabs"] { 
-        border-top: 4px solid #FFFFFF !important; 
-        margin-top: -4px; 
-        padding-top: 20px; 
-    }
-
-    /* Popover Floating Chat - Blue Theme */
-    div[data-testid="stPopover"] { position: fixed !important; bottom: 30px !important; right: 30px !important; z-index: 99999 !important; width: fit-content !important; }
-    div[data-testid="stPopover"] > button { 
-        background-color: #0A0A0A !important; color: #00D2FF !important; border: 2px solid #00D2FF !important; border-radius: 50px !important; padding: 10px 25px !important; font-size: 16px !important; box-shadow: 0px 0px 15px rgba(0, 210, 255, 0.3) !important;
-    }
-    div[data-testid="stPopoverBody"] { background-color: #0A0A0A !important; border: 4px solid #00D2FF !important; box-shadow: 8px 8px 0px rgba(0, 210, 255, 0.5) !important; border-radius: 0px !important; width: 380px !important; }
-    div[data-testid="stChatInput"] { border: 2px solid #333 !important; border-radius: 0px !important; }
-    div[data-testid="stChatMessage"] { background-color: #121214 !important; border: 1px solid #2d2d30 !important; }
-    
-    /* Stark Compact Monthly ledger uploaders */
-    [data-testid="stFileUploader"] {
-        padding: 0px !important;
-        margin: 0px !important;
-        width: 140px !important; /* Room for shadow button */
-        max-width: 140px !important;
-        height: auto !important;
-    }
-    [data-testid="stFileUploader"] label {
-        display: none !important;
-    }
-    [data-testid="stFileUploaderDropzone"] {
-        border: none !important; /* NUKES THE DOTTED BOX ENTIRELY */
-        background-color: transparent !important; /* Seamless background */
-        box-shadow: none !important;
-        padding: 0px !important;
-        margin: 0px !important;
-        width: 130px !important; 
-        max-width: 130px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-    /* Target Streamlit 1.38+ dropzone instructions and nuke them */
-    [data-testid="stFileUploaderDropzoneInstructions"] {
-        display: none !important;
-    }
-    /* Force the browse button to match the rest of the site (Stark White + Neon Green shadow) */
-    [data-testid="stFileUploaderDropzone"] button {
-        background-color: #FFFFFF !important; 
-        color: #000000 !important; 
-        border: 2px solid #FFFFFF !important; 
-        box-shadow: 3px 3px 0px #00FFAA !important; /* Neon Green shadow */
-        border-radius: 0px !important; 
-        font-weight: 900 !important; 
-        text-transform: uppercase;
-        font-size: 11px !important;
-        padding: 4px 12px !important;
-        margin: 0px auto !important;
-        display: block !important;
-        transition: all 0.1s ease;
-    }
-    [data-testid="stFileUploaderDropzone"] button:hover {
-        background-color: #00FFAA !important; 
-        border-color: #00FFAA !important;
-        box-shadow: 0px 0px 0px #00FFAA !important;
-    }
-    /* Force text inside button to stay black */
-    [data-testid="stFileUploaderDropzone"] button * {
-        color: #000000 !important;
-        font-weight: 900 !important;
-    }
-    
-    header { visibility: hidden; }
-</style>
-""", unsafe_allow_html=True)
 
 # --- UI START ---
 st.title("EY: FIDUCIARY VERACITY PORTAL")
@@ -573,9 +871,9 @@ if client:
                     
                     fig_trend.add_scatter(x=missing['Date_Parsed'], y=missing['Expected_Salary'], mode='markers', marker=dict(color=client_color, size=12, symbol='x'), name='Missing Voucher (Interpolated)')
                     
-                fig_trend.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="white"), hovermode="x unified")
-                fig_trend.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#333333')
-                fig_trend.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#333333')
+                fig_trend.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="var(--text-color)"), hovermode="x unified")
+                fig_trend.update_xaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)')
+                fig_trend.update_yaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)')
                 st.plotly_chart(fig_trend, use_container_width=True)
                 
                 # D. Volatility
@@ -584,9 +882,9 @@ if client:
                 fig_mom = px.bar(client_sow_df, x="Date_Parsed", y="MoM_Change_%")
                 fig_mom.add_hline(y=10.0, line_dash="dash", line_color="#FF3333", annotation_text="Anomaly Threshold (+10%)")
                 fig_mom.add_hline(y=-10.0, line_dash="dash", line_color="#FF3333", annotation_text="Anomaly Threshold (-10%)")
-                fig_mom.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="white"))
-                fig_mom.update_xaxes(showgrid=True, gridwidth=1, gridcolor='#333333')
-                fig_mom.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#333333')
+                fig_mom.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="var(--text-color)"))
+                fig_mom.update_xaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)')
+                fig_mom.update_yaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)')
                 st.plotly_chart(fig_mom, use_container_width=True)
                 
                 missing_dates = ideal_dates.difference(pd.to_datetime(client_sow_df['Date_Parsed']).dt.tz_localize(None))

@@ -13,22 +13,22 @@ def login_screen():
     st.markdown("""
     <style>
         header, [data-testid="stSidebar"] { display: none !important; }
-        .stApp { background-color: #080808 !important; }
+        .stApp { background-color: var(--bg-color) !important; }
         
         .login-card {
-            background-color: #121318 !important;
-            border: 1px solid #2d2d30 !important;
+            background-color: var(--card-bg) !important;
+            border: 1px solid var(--border-color) !important;
             border-top: 4px solid #1E60FF !important; /* Swiss Blue Header */
-            box-shadow: 8px 8px 0px #000000 !important;
+            box-shadow: 8px 8px 0px var(--btn-shadow) !important;
             padding: 40px !important;
             margin-top: 80px !important;
         }
         .login-title {
             font-family: 'Helvetica Neue', Arial, sans-serif !important;
             font-weight: 900 !important;
-            color: #FFFFFF !important;
+            color: var(--text-color) !important;
             text-transform: uppercase;
-            border-bottom: 4px solid #FFDF00;
+            border-bottom: 4px solid var(--gold-text);
             padding-bottom: 10px;
             margin-bottom: 30px;
             text-align: center;
