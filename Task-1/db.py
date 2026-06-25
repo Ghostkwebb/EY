@@ -51,6 +51,20 @@ def init_db():
                 "RM_Name": "Carlos Krause",
                 "Industry": "Pharmaceutics",
                 "Country": "US",
+                "Career_Segments": [
+                    {"Company": "Google", "Job_Title": "Software Engineer", "Start_Month": "Jan", "Start_Year": 2019, "End_Month": "Jun", "End_Year": 2021},
+                    {"Company": "Microsoft", "Job_Title": "Software Engineer", "Start_Month": "Jul", "Start_Year": 2021, "End_Month": "Dec", "End_Year": 2023}
+                ],
+                "Properties": [
+                    {
+                        "Name": "Kramer Tech Plaza (Bangalore)",
+                        "Area": 8000,
+                        "Base_Rate": 85,
+                        "Location_Tier": "Tier 1 Metro (Bangalore)",
+                        "Property_Type": "Prime Commercial Space",
+                        "Demand_Factor": "High (Tech Park / SEZ)"
+                    }
+                ],
                 "SOW_Drivers": {
                     "Executive Yield (Salary)": {"Applicable": True, "Status": "Partially Available" if preloaded["C-1001"]["Executive Yield (Salary)"] else "Not Available", "Slips": preloaded["C-1001"]["Executive Yield (Salary)"]},
                     "Corporate Equity Liquidation": {"Applicable": True, "Status": "Partially Available" if preloaded["C-1001"]["Corporate Equity Liquidation"] else "Not Available", "Slips": preloaded["C-1001"]["Corporate Equity Liquidation"]},
@@ -71,6 +85,20 @@ def init_db():
                 "RM_Name": "Carlos Krause",
                 "Industry": "Technology",
                 "Country": "IN",
+                "Career_Segments": [
+                    {"Company": "EY", "Job_Title": "Relationship Manager", "Start_Month": "Jan", "Start_Year": 2019, "End_Month": "Dec", "End_Year": 2020},
+                    {"Company": "Meta", "Job_Title": "Relationship Manager", "Start_Month": "Jan", "Start_Year": 2021, "End_Month": "Dec", "End_Year": 2023}
+                ],
+                "Properties": [
+                    {
+                        "Name": "Patel Tech Tower (Mumbai)",
+                        "Area": 5000,
+                        "Base_Rate": 90,
+                        "Location_Tier": "Tier 1 Metro (Mumbai)",
+                        "Property_Type": "Tech Park / SEZ Office Space",
+                        "Demand_Factor": "High Density / High Demand"
+                    }
+                ],
                 "SOW_Drivers": {
                     "Executive Yield (Salary)": {"Applicable": True, "Status": "Partially Available" if preloaded["C-1002"]["Executive Yield (Salary)"] else "Not Available", "Slips": preloaded["C-1002"]["Executive Yield (Salary)"]},
                     "Corporate Equity Liquidation": {"Applicable": True, "Status": "Partially Available" if preloaded["C-1002"]["Corporate Equity Liquidation"] else "Not Available", "Slips": preloaded["C-1002"]["Corporate Equity Liquidation"]},
@@ -91,6 +119,20 @@ def init_db():
                 "RM_Name": "Carlos Krause",
                 "Industry": "Data Analytics",
                 "Country": "IN",
+                "Career_Segments": [
+                    {"Company": "Amazon", "Job_Title": "Data Analyst", "Start_Month": "Jan", "Start_Year": 2019, "End_Month": "Dec", "End_Year": 2021},
+                    {"Company": "McKinsey", "Job_Title": "Data Analyst", "Start_Month": "Jan", "Start_Year": 2022, "End_Month": "Dec", "End_Year": 2023}
+                ],
+                "Properties": [
+                    {
+                        "Name": "Seth Residency (Pune)",
+                        "Area": 2500,
+                        "Base_Rate": 35,
+                        "Location_Tier": "Tier 2 City (Pune)",
+                        "Property_Type": "Suburban Residential Space",
+                        "Demand_Factor": "Medium Density / Stable Demand"
+                    }
+                ],
                 "SOW_Drivers": {
                     "Executive Yield (Salary)": {"Applicable": True, "Status": "Partially Available" if preloaded["C-1003"]["Executive Yield (Salary)"] else "Not Available", "Slips": preloaded["C-1003"]["Executive Yield (Salary)"]},
                     "Corporate Equity Liquidation": {"Applicable": False, "Status": "NA", "Slips": []},

@@ -7,14 +7,18 @@ from dateutil.relativedelta import relativedelta
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
-# 1. Setup folders
+# 1. Setup folders and clear the entire mock_data folder to start fresh
+import shutil
+if os.path.exists("mock_data"):
+    shutil.rmtree("mock_data")
 os.makedirs("mock_data/pdfs", exist_ok=True)
+os.makedirs("mock_data/test_missing_slips", exist_ok=True)
 
 # 2. Client Base Configs
 clients = [
-    {"Client_ID": "C-1001", "Name": "Robert Kramer", "Job_Title": "Software Engineer", "Salary_Base": 65000, "Rent_Base": 40000, "Equity_Base": 120000},
-    {"Client_ID": "C-1002", "Name": "Priya Patel", "Job_Title": "Relationship Manager", "Salary_Base": 85000, "Rent_Base": 0, "Equity_Base": 200000},
-    {"Client_ID": "C-1003", "Name": "Vikram Seth", "Job_Title": "Data Analyst", "Salary_Base": 50000, "Rent_Base": 25000, "Equity_Base": 0}
+    {"Client_ID": "C-1001", "Name": "Robert Kramer", "Job_Title": "Software Engineer", "Rent_Base": 1485120, "Equity_Base": 120000},
+    {"Client_ID": "C-1002", "Name": "Priya Patel", "Job_Title": "Relationship Manager", "Rent_Base": 0, "Equity_Base": 200000},
+    {"Client_ID": "C-1003", "Name": "Vikram Seth", "Job_Title": "Data Analyst", "Rent_Base": 70000, "Equity_Base": 0}
 ]
 
 start_date = datetime(2019, 1, 1)
@@ -39,9 +43,9 @@ def draw_pdf(rec, sow_type):
     c.drawString(50, 680, f"Name: {rec['Name']}")
     c.drawString(50, 660, f"Job Title/SOW Role: {rec['Job_Title']}")
     c.drawString(50, 640, f"Month/Year: {rec['Month_Year']}")
-    c.drawString(50, 600, f"Gross Amount: INR {rec['Gross_Salary']}")
-    c.drawString(50, 580, f"Tax / Fees: INR {rec['Tax']}")
-    c.drawString(50, 560, f"Net Amount Received: INR {rec['Net_Salary']}")
+    c.drawString(50, 600, f"Gross Amount: INR {rec['Gross_Salary']:,}")
+    c.drawString(50, 580, f"Tax / Fees: INR {rec['Tax']:,}")
+    c.drawString(50, 560, f"Net Amount Received: INR {rec['Net_Salary']:,}")
     c.save()
 
 # 3. Generate 60 Months of Multi-Driver SOW data
@@ -53,14 +57,38 @@ for client in clients:
         month_year_str = current_date.strftime("%b %Y")
         
         # A. GENERATE EXECUTIVE COMPENSATION (SALARY) - Monthly
-        sal_base = client["Salary_Base"]
+        # Dynamically map correct high-value benchmark salary bases
+        sal_base = 100000
+        job_role = client["Job_Title"]
+        if client["Client_ID"] == "C-1001":
+            if current_date < datetime(2021, 7, 1):
+                sal_base = 250000  # Google SE
+                job_role = "Software Engineer"
+            else:
+                sal_base = 280000  # Microsoft SE
+                job_role = "Software Engineer"
+        elif client["Client_ID"] == "C-1002":
+            if current_date < datetime(2021, 1, 1):
+                sal_base = 130000  # EY RM
+                job_role = "Relationship Manager"
+            else:
+                sal_base = 160000  # Meta RM
+                job_role = "Relationship Manager"
+        elif client["Client_ID"] == "C-1003":
+            if current_date < datetime(2022, 1, 1):
+                sal_base = 150000  # Amazon DA
+                job_role = "Data Analyst"
+            else:
+                sal_base = 180000  # McKinsey DA
+                job_role = "Data Analyst"
+
         sal_val = int(sal_base * (1 + random.uniform(-0.02, 0.02)))
         if (i + 1) % 3 == 0: sal_val += int(sal_base * random.uniform(0.15, 0.30)) # Quarterly bonus
         if (i + 1) % 12 == 0: sal_val += int(sal_base * random.uniform(0.40, 0.75)) # Year-end bonus
         
         sal_tax = int(sal_val * 0.15)
         client_summary_records.append({
-            "Client_ID": client["Client_ID"], "Name": client["Name"], "Job_Title": client["Job_Title"],
+            "Client_ID": client["Client_ID"], "Name": client["Name"], "Job_Title": job_role,
             "SOW_Driver": "Executive Yield (Salary)", "Date": current_date.strftime("%Y-%m-%d"),
             "Month_Year": month_year_str, "Gross_Salary": sal_val, "Tax": sal_tax, "Net_Salary": sal_val - sal_tax
         })
@@ -90,11 +118,12 @@ for client in clients:
                 "Month_Year": month_year_str, "Gross_Salary": eq_val, "Tax": eq_tax, "Net_Salary": eq_val - eq_tax
             })
 
-    # Apply Random 10 Gaps (Missing slips) per driver category
+    # Apply Random Gaps (Missing slips) per driver category (10 for Salary/Rent, only 2 for Equity)
     for driver in ["Executive Yield (Salary)", "Real Estate Yield (Rent)", "Corporate Equity Liquidation"]:
         driver_recs = [r for r in client_summary_records if r["SOW_Driver"] == driver]
-        if len(driver_recs) >= 10:
-            drop_indices = random.sample(range(len(driver_recs)), 10)
+        drop_count = 2 if driver == "Corporate Equity Liquidation" else 10
+        if len(driver_recs) >= drop_count:
+            drop_indices = random.sample(range(len(driver_recs)), drop_count)
             for idx in sorted(drop_indices, reverse=True):
                 del driver_recs[idx]
             

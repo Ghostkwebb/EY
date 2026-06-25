@@ -7,12 +7,107 @@ import plotly.express as px
 import os
 import db  
 import auth
+from datetime import datetime
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from serpapi import GoogleSearch
+
+# --- ADVANCED BENCHMARK DATABASE & UTILITIES ---
+COMPANY_SALARIES = {
+    "Google": {
+        "Software Engineer": 250000,
+        "Data Analyst": 180000,
+        "Product Manager": 280000,
+        "Relationship Manager": 150000,
+        "Management Consultant": 200000
+    },
+    "Microsoft": {
+        "Software Engineer": 280000,
+        "Data Analyst": 160000,
+        "Product Manager": 250000,
+        "Relationship Manager": 140000,
+        "Management Consultant": 190000
+    },
+    "Meta": {
+        "Software Engineer": 270000,
+        "Data Analyst": 190000,
+        "Product Manager": 300000,
+        "Relationship Manager": 160000,
+        "Management Consultant": 210000
+    },
+    "Amazon": {
+        "Software Engineer": 200000,
+        "Data Analyst": 150000,
+        "Product Manager": 230000,
+        "Relationship Manager": 130000,
+        "Management Consultant": 180000
+    },
+    "EY": {
+        "Software Engineer": 120000,
+        "Data Analyst": 110000,
+        "Product Manager": 150000,
+        "Relationship Manager": 130000,
+        "Management Consultant": 160000
+    },
+    "McKinsey": {
+        "Software Engineer": 150000,
+        "Data Analyst": 180000,
+        "Product Manager": 180000,
+        "Relationship Manager": 140000,
+        "Management Consultant": 220000
+    },
+    "Generic/Other": {
+        "Software Engineer": 100000,
+        "Data Analyst": 80000,
+        "Product Manager": 120000,
+        "Relationship Manager": 80000,
+        "Management Consultant": 110000
+    }
+}
+
+def parse_month_year(month_str, year_int):
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    try:
+        month_idx = months.index(month_str) + 1
+    except ValueError:
+        month_idx = 1
+    return datetime(year_int, month_idx, 1)
+
+def get_career_segments(client_id):
+    key = f"career_segments_{client_id}"
+    if key not in st.session_state:
+        if "active_client" in st.session_state and st.session_state.active_client:
+            st.session_state[key] = st.session_state.active_client.get("Career_Segments", [])
+        else:
+            st.session_state[key] = []
+    return st.session_state[key]
+
+def get_benchmark_value_for_month(client_id, date_obj):
+    segments = get_career_segments(client_id)
+    for seg in segments:
+        start_dt = parse_month_year(seg["Start_Month"], seg["Start_Year"])
+        end_dt = parse_month_year(seg["End_Month"], seg["End_Year"])
+        s_date = datetime(start_dt.year, start_dt.month, 1)
+        e_date = datetime(end_dt.year, end_dt.month, 1)
+        curr_date = datetime(date_obj.year, date_obj.month, 1)
+        if s_date <= curr_date <= e_date:
+            company = seg["Company"]
+            role = seg["Job_Title"]
+            base_rate = COMPANY_SALARIES.get(company, COMPANY_SALARIES["Generic/Other"]).get(role, 100000)
+            return base_rate, company, role
+    return 100000, "Generic/Other", "Software Engineer"
+
+def get_properties(client_id):
+    key = f"properties_{client_id}"
+    if key not in st.session_state:
+        if "active_client" in st.session_state and st.session_state.active_client:
+            st.session_state[key] = st.session_state.active_client.get("Properties", [])
+        else:
+            st.session_state[key] = []
+    return st.session_state[key]
 
 # --- SETUP ---
 load_dotenv()
@@ -500,7 +595,85 @@ st.markdown("""
         stroke-opacity: 0.7 !important;
     }
     
-    header { visibility: hidden; }
+    /* Sidebar Navigation Tabs Styling */
+    [data-testid="stSidebar"] button[kind="primary"] {
+        background-color: #1E60FF !important;
+        color: #FFFFFF !important;
+        border: 2px solid #FFFFFF !important;
+        box-shadow: 4px 4px 0px #00D2FF !important;
+        border-radius: 0px !important;
+        font-family: 'Helvetica Neue', Arial, sans-serif !important;
+        font-weight: 900 !important;
+        text-transform: uppercase;
+        font-size: 13px !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+        padding: 12px 16px !important;
+        margin-bottom: 8px !important;
+        transform: translate(-2px, -2px) !important;
+    }
+    
+    [data-testid="stSidebar"] button[kind="primary"] * {
+        color: #FFFFFF !important;
+        font-weight: 900 !important;
+    }
+    
+    [data-testid="stSidebar"] button[kind="secondary"] {
+        background-color: var(--card-bg) !important;
+        color: var(--meta-label) !important;
+        border: 2px solid var(--border-color) !important;
+        box-shadow: none !important;
+        border-radius: 0px !important;
+        font-family: 'Helvetica Neue', Arial, sans-serif !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        font-size: 13px !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+        padding: 12px 16px !important;
+        margin-bottom: 8px !important;
+        transition: all 0.1s ease !important;
+    }
+    
+    [data-testid="stSidebar"] button[kind="secondary"] * {
+        color: var(--meta-label) !important;
+    }
+    
+    [data-testid="stSidebar"] button[kind="secondary"]:hover {
+        background-color: #1E60FF !important;
+        color: #FFFFFF !important;
+        border: 2px solid #FFFFFF !important;
+        box-shadow: 4px 4px 0px #00D2FF !important;
+        transform: translate(-2px, -2px) !important;
+    }
+    
+    [data-testid="stSidebar"] button[kind="secondary"]:hover * {
+        color: #FFFFFF !important;
+    }
+    
+    /* Keep header visible but transparent, and hide default deploy/settings buttons */
+    header {
+        background-color: transparent !important;
+    }
+    [data-testid="stHeaderActionElements"] {
+        display: none !important;
+    }
+    
+    /* Stark Swiss Sidebar Collapse Button High-Visibility styling */
+    [data-testid="collapsedControl"] {
+        background-color: var(--card-bg) !important;
+        border: 2px solid #1E60FF !important; /* Electric Blue border */
+        box-shadow: 3px 3px 0px var(--btn-shadow) !important; /* Cyan shadow */
+        border-radius: 0px !important;
+        color: var(--text-color) !important;
+        opacity: 1 !important;
+        z-index: 999999 !important;
+    }
+    [data-testid="collapsedControl"] svg {
+        fill: var(--text-color) !important;
+        color: var(--text-color) !important;
+        opacity: 1 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -611,36 +784,105 @@ def parse_pdf(file, llm_choice, api_key):
 
 
 # --- UI START ---
-st.title("EY: FIDUCIARY VERACITY PORTAL")
+# Initialize view state
+if "view_mode" not in st.session_state:
+    st.session_state.view_mode = "summary"
+if "selected_sow" not in st.session_state:
+    st.session_state.selected_sow = "Executive Yield (Salary)"
 
-# 1. Autocomplete Search Bar Layout
+# --- LEFT SIDEBAR NAVIGATION SYSTEM ---
+st.sidebar.markdown(f"""
+<div style="background-color: #121318; border: 2px solid #2d2d30; padding: 15px; margin-bottom: 20px; box-shadow: 4px 4px 0px #1E60FF;">
+    <h2 style="font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 900; color: #FFFFFF; margin: 0; text-align: center; text-transform: uppercase; letter-spacing: 1px; font-size: 20px;">EY FIDUCIARY</h2>
+    <p style="font-size: 11px; color: #00D2FF; margin: 5px 0 0 0; text-align: center; font-family: 'Courier New', monospace; font-weight: bold; text-transform: uppercase;">VERACITY GATEWAY</p>
+</div>
+""", unsafe_allow_html=True)
+
+# 1. Target Lookup in Sidebar
 all_client_options = {
     "Robert Kramer (C-1001)": "C-1001",
     "Priya Patel (C-1002)": "C-1002",
     "Vikram Seth (C-1003)": "C-1003"
 }
 
-st.write("### 🔍 TARGET LOOKUP")
-search_selection = st.selectbox(
+st.sidebar.write("### 🔍 TARGET LOOKUP")
+# Find current selection index
+default_idx = 0
+if "active_client" in st.session_state and st.session_state.active_client:
+    curr_cid = st.session_state.active_client["Client_ID"]
+    for idx, (label, cid) in enumerate(all_client_options.items()):
+        if cid == curr_cid:
+            default_idx = idx + 1
+            break
+
+search_selection = st.sidebar.selectbox(
     "SEARCH CLIENT NAME OR ID:", 
     options=["Select Client..."] + list(all_client_options.keys()), 
+    index=default_idx,
     label_visibility="collapsed",
-    key="autocomplete_search"
+    key="sidebar_client_search"
 )
-st.write("") # Whitespace padding
 
-# Manage state routing
-if "view_mode" not in st.session_state:
-    st.session_state.view_mode = "summary"
-if "selected_sow" not in st.session_state:
-    st.session_state.selected_sow = "Executive Yield (Salary)" 
-
+# Route active client based on sidebar selection
 if search_selection != "Select Client...":
     target_id = all_client_options[search_selection]
-    st.session_state.active_client = db.get_client(target_id)
+    if "active_client" not in st.session_state or not st.session_state.active_client or st.session_state.active_client["Client_ID"] != target_id:
+        st.session_state.active_client = db.get_client(target_id)
+        st.session_state.view_mode = "summary"
+        st.session_state.opened_tabs = ["👤 Profile Summary", "🛡️ Compliance Matrix"]
+        if "sidebar_navigation_radio" in st.session_state:
+            del st.session_state.sidebar_navigation_radio
+        st.rerun()
 else:
-    st.session_state.active_client = None
-    st.session_state.view_mode = "summary"
+    if "active_client" in st.session_state and st.session_state.active_client:
+        st.session_state.active_client = None
+        st.session_state.view_mode = "summary"
+        st.session_state.opened_tabs = ["👤 Profile Summary", "🛡️ Compliance Matrix"]
+        if "sidebar_navigation_radio" in st.session_state:
+            del st.session_state.sidebar_navigation_radio
+        st.rerun()
+
+client = st.session_state.get("active_client")
+
+# 2. visual CDD progress matrix in Sidebar (if client selected)
+if client:
+    # Dynamically determine which tabs to display in the sidebar
+    tabs_to_show = ["👤 Profile Summary", "🛡️ Compliance Matrix"]
+    if st.session_state.view_mode == "compartment":
+        tabs_to_show.append(f"💼 Audit: {st.session_state.selected_sow}")
+        
+    st.sidebar.markdown("<hr style='border: 1px solid #2d2d30; margin: 20px 0;'>", unsafe_allow_html=True)
+    st.sidebar.write("### 🛡️ CDD WORKSPACE NAVIGATION")
+    
+    # Render buttons as tabs (Only show the relevant ones!)
+    for label in tabs_to_show:
+        is_active = False
+        if label == "👤 Profile Summary" and st.session_state.view_mode == "summary":
+            is_active = True
+        elif label == "🛡️ Compliance Matrix" and st.session_state.view_mode == "matrix":
+            is_active = True
+        elif label.startswith("💼 Audit: ") and st.session_state.view_mode == "compartment":
+            target_sow = label.replace("💼 Audit: ", "")
+            if st.session_state.selected_sow == target_sow:
+                is_active = True
+                
+        if st.sidebar.button(
+            label, 
+            key=f"sidebar_nav_btn_{label}", 
+            type="primary" if is_active else "secondary",
+            use_container_width=True
+        ):
+            if label == "👤 Profile Summary":
+                st.session_state.view_mode = "summary"
+            elif label == "🛡️ Compliance Matrix":
+                st.session_state.view_mode = "matrix"
+            elif label.startswith("💼 Audit: "):
+                st.session_state.selected_sow = label.replace("💼 Audit: ", "")
+                st.session_state.view_mode = "compartment"
+            st.rerun()
+
+# Main Page Title
+st.title("EY: FIDUCIARY VERACITY PORTAL")
 
 # Get active client data
 client = st.session_state.get("active_client")
@@ -731,7 +973,7 @@ if client:
                 st.session_state.selected_sow = category
                 st.session_state.view_mode = "compartment"
                 st.rerun()
-
+ 
     # --- PAGE 3: compartment (Active Documentary Proof Compartment) ---
     elif st.session_state.view_mode == "compartment":
         st.write("---")
@@ -803,7 +1045,7 @@ if client:
                                         st.session_state.active_client = db.get_client(client["Client_ID"])
                                         st.rerun()
             
-            # B. MARKET PLAUSIBILITY CALIBRATION (Scrapes Google, offers Top 3 Options)
+            # B. MARKET PLAUSIBILITY CALIBRATION & BENCHMARKING
             try:
                 full_db_df = pd.read_csv("mock_data/client_summary.csv")
                 full_db_df['Date_Parsed'] = pd.to_datetime(full_db_df['Month_Year'], format='%b %Y', errors='coerce')
@@ -818,75 +1060,337 @@ if client:
                 st.write("---")
                 st.subheader("MARKET PLAUSIBILITY CALIBRATION")
                 
-                # Dynamic search keyword
-                search_terms = {
-                    "Executive Yield (Salary)": f"{client_sow_df['Job_Title'].iloc[0]} average salary",
-                    "Corporate Equity Liquidation": "average corporate executive stock dividend payout",
-                    "Real Estate Yield (Rent)": "average monthly commercial property rent yield"
-                }
-                search_q = search_terms.get(active_sow, f"{active_sow} average yield")
-                serp_key = os.getenv("SERPAPI_KEY")
-                
-                # Dynamic Scrape (Top 3 Sources)
-                with st.spinner("Scraping index sources..."):
-                    sources = fetch_real_benchmark_sources(search_q, serp_key, llm_choice, api_key)
-                
-                # NEW: Dropdown expander for Source Verification Audit & Selector
-                with st.expander("📄 VIEW VERIFIED SOURCE SNIPPETS & COMPLIANCE LINKS"):
-                    # RM Verification selector is now safely housed inside the expander
-                    st.write("**Verify Plausibility Reference Source:**")
-                    source_options = [f"{s['src']} : INR {s['val']}/mo" for s in sources]
-                    selected_option = st.radio(
-                        "SELECT VERIFIED REFERENCE SOURCE (Updates Trend Chart):",
-                        options=source_options,
-                        key=f"calibration_selector_{active_sow}"
-                    )
-                    
-                    # Unpack selected values
-                    selected_idx = source_options.index(selected_option)
-                    bench_val = sources[selected_idx]["val"]
-                    snippet_text = sources[selected_idx]["snip"]
-                    source_url = sources[selected_idx]["link"]
-                    
-                    st.markdown("---")
-                    st.markdown(f"**Verified Source URL:** [Open Source Site]({source_url})")
-                    st.markdown(f"**Scraped Context/Snippet:** *{snippet_text}*")
-                
-                # C. Plot charts calibrated to selected source
-                fig_trend = px.line()
-                client_color = px.colors.qualitative.Plotly[0]
+                bench_val = 0
                 ideal_dates = pd.date_range(start='2019-01-01', end='2023-12-01', freq='MS')
                 merged = pd.merge(pd.DataFrame({'Date_Parsed': ideal_dates}), client_sow_df[['Date_Parsed', 'Gross_Salary']], on='Date_Parsed', how='left')
+                fig_trend = px.line()
+                client_color = px.colors.qualitative.Plotly[0]
                 
-                # Plot Actuals
-                fig_trend.add_scatter(x=merged['Date_Parsed'], y=merged['Gross_Salary'], mode='lines+markers', name='Actual Proof', line=dict(color=client_color), connectgaps=False)
+                # --- DRIVER 1: EXECUTIVE SALARY (SEGMENTED TIMELINE) ---
+                if active_sow == "Executive Yield (Salary)":
+                    segments = get_career_segments(client['Client_ID'])
+                    
+                    # 1. Audited Career Pathway UI (Read-Only)
+                    st.write("### 💼 CAREER PATHWAY TIMELINE CDD")
+                    with st.expander("📄 VIEW ACTIVE CAREER PATHWAY (READ-ONLY)", expanded=True):
+                        st.markdown("<p style='font-size:13px; color:var(--meta-label);'>This career timeline is pre-registered in the secure client database. It defines the company-specific and role-specific benchmark thresholds for each period.</p>", unsafe_allow_html=True)
+                        
+                        st.write("**Current Employment Timeline:**")
+                        cols_h = st.columns([2, 2, 3])
+                        cols_h[0].write("**COMPANY**")
+                        cols_h[1].write("**JOB ROLE**")
+                        cols_h[2].write("**AUDIT PERIOD**")
+                        
+                        for seg in segments:
+                            cols = st.columns([2, 2, 3])
+                            cols[0].markdown(f"<span style='font-weight:bold; color:#00D2FF;'>{seg['Company']}</span>", unsafe_allow_html=True)
+                            cols[1].write(seg['Job_Title'])
+                            cols[2].write(f"{seg['Start_Month']} {seg['Start_Year']} - {seg['End_Month']} {seg['End_Year']}")
+                            
+                    # 2. SerpAPI Live Scrape cross-reference
+                    search_q = f"{client_sow_df['Job_Title'].iloc[0]} average salary"
+                    serp_key = os.getenv("SERPAPI_KEY")
+                    with st.spinner("Scraping live salary indices..."):
+                        sources = fetch_real_benchmark_sources(search_q, serp_key, llm_choice, api_key)
+                        
+                    with st.expander("📄 VIEW VERIFIED SOURCE SNIPPETS & COMPLIANCE LINKS", expanded=False):
+                        st.write("**Verify Plausibility Reference Source:**")
+                        source_options = [f"{s['src']} : INR {s['val']}/mo" for s in sources]
+                        selected_option = st.radio(
+                            "SELECT VERIFIED REFERENCE SOURCE (Updates Trend Chart):",
+                            options=source_options,
+                            key=f"calibration_selector_{active_sow}"
+                        )
+                        selected_idx = source_options.index(selected_option)
+                        bench_val = sources[selected_idx]["val"]
+                        snippet_text = sources[selected_idx]["snip"]
+                        source_url = sources[selected_idx]["link"]
+                        
+                        st.markdown("---")
+                        st.markdown(f"**Verified Source URL:** [Open Source Site]({source_url})")
+                        st.markdown(f"**Scraped Context/Snippet:** *{snippet_text}*")
+                            
+                    # Compute segmented benchmark values
+                    benchmark_vals = []
+                    for d in merged['Date_Parsed']:
+                        val, co, ro = get_benchmark_value_for_month(client['Client_ID'], d)
+                        benchmark_vals.append(val)
+                    merged['Benchmark_Salary'] = benchmark_vals
+                    
+                    # Plot company-specific Actual Audited Proof lines
+                    solid_color_map = {
+                        "Google": "#4285F4",       # Google Blue
+                        "Microsoft": "#F25022",    # Microsoft Orange
+                        "Meta": "#0668E1",         # Meta Blue
+                        "Amazon": "#FF9900",       # Amazon Orange
+                        "EY": "#FFE600",           # EY Yellow
+                        "McKinsey": "#005A9C"      # McKinsey Blue
+                    }
+                    
+                    added_companies = set()
+                    for seg in segments:
+                        start_dt = parse_month_year(seg["Start_Month"], seg["Start_Year"])
+                        end_dt = parse_month_year(seg["End_Month"], seg["End_Year"])
+                        
+                        # Filter merged for dates in this segment
+                        seg_df = merged[(merged['Date_Parsed'] >= start_dt) & (merged['Date_Parsed'] <= end_dt)].sort_values('Date_Parsed')
+                        
+                        if not seg_df.empty:
+                            company = seg["Company"]
+                            role = seg["Job_Title"]
+                            line_color = solid_color_map.get(company, "#FFDF00")
+                            
+                            # Avoid duplicate legend entries for the same company + role
+                            legend_key = f"{company} ({role})"
+                            show_in_legend = legend_key not in added_companies
+                            added_companies.add(legend_key)
+                            
+                            fig_trend.add_scatter(
+                                x=seg_df['Date_Parsed'],
+                                y=seg_df['Gross_Salary'],
+                                mode='lines+markers',
+                                name=f"{company} Audited Proof ({role})",
+                                legendgroup=legend_key,
+                                showlegend=show_in_legend,
+                                line=dict(color=line_color, width=2.5),
+                                marker=dict(color=line_color, size=6),
+                                connectgaps=False
+                            )
+                        
+                    # Interpolate Gaps using segmented benchmark rate
+                    missing = merged[merged['Gross_Salary'].isna()].copy()
+                    if not missing.empty:
+                        missing['Expected_Salary'] = [get_benchmark_value_for_month(client['Client_ID'], d)[0] for d in missing['Date_Parsed']]
+                        
+                        # Plot missing vouchers as crosses, color-coded by the company of that month
+                        for seg in segments:
+                            start_dt = parse_month_year(seg["Start_Month"], seg["Start_Year"])
+                            end_dt = parse_month_year(seg["End_Month"], seg["End_Year"])
+                            
+                            seg_missing = missing[(missing['Date_Parsed'] >= start_dt) & (missing['Date_Parsed'] <= end_dt)]
+                            if not seg_missing.empty:
+                                company = seg["Company"]
+                                line_color = solid_color_map.get(company, "#FFDF00")
+                                fig_trend.add_scatter(
+                                    x=seg_missing['Date_Parsed'],
+                                    y=seg_missing['Expected_Salary'],
+                                    mode='markers',
+                                    marker=dict(color=line_color, size=12, symbol='x'),
+                                    name=f"Missing Voucher ({company} Benchmark Expectation)",
+                                    legendgroup=f"{company} ({seg['Job_Title']})",
+                                    showlegend=False
+                                )
+                                
+                        # Plot a single dummy trace at the end of Salary SOW for the legend to explain the 'x' marker
+                        fig_trend.add_scatter(
+                            x=[None],
+                            y=[None],
+                            mode='markers',
+                            marker=dict(color='#888888', size=10, symbol='x'),
+                            name='Missing Voucher (Benchmark Expectation)',
+                            showlegend=True
+                        )
+
+                # --- DRIVER 2: REAL ESTATE RENT (YIELD CALCULATOR) ---
+                elif active_sow == "Real Estate Yield (Rent)":
+                    st.write("### 🏢 REAL ESTATE YIELD PLAUSIBILITY ENGINE")
+                    props = get_properties(client['Client_ID'])
+                    active_prop = props[0] # Focus on primary property
+                    
+                    with st.expander("🛠️ AUDIT PROPERTY PARAMETERS & COEFFICIENTS", expanded=True):
+                        col_p1, col_p2 = st.columns(2)
+                        prop_name = col_p1.text_input("PROPERTY IDENTIFIER:", value=active_prop["Name"], key="rent_prop_name")
+                        area_sqft = col_p1.number_input("TOTAL PROPERTY AREA (SQ. FT.):", min_value=100, max_value=100000, value=active_prop["Area"], step=500, key="rent_prop_area")
+                        base_rate_sqft = col_p1.slider("BASE RENTAL RATE (INR/SQ. FT. per month):", min_value=5, max_value=300, value=active_prop["Base_Rate"], step=5, key="rent_prop_rate")
+                        
+                        loc_tiers = {
+                            "Tier 1 Metro (Bangalore/Mumbai/Delhi)": 1.4,
+                            "Tier 2 City (Pune/Hyderabad/Chennai)": 1.0,
+                            "Tier 3 City (Other regions)": 0.7
+                        }
+                        prop_types = {
+                            "Prime Commercial Space": 1.3,
+                            "High-street Retail Space": 1.5,
+                            "Suburban Residential Space": 0.8,
+                            "Tech Park / SEZ Office Space": 1.1
+                        }
+                        demand_factors = {
+                            "High Density / High Demand": 1.2,
+                            "Medium Density / Stable Demand": 1.0,
+                            "Low Density / Low Demand": 0.8
+                        }
+                        
+                        def get_index_or_default(val, choices):
+                            for idx, key in enumerate(choices.keys()):
+                                if val in key: return idx
+                            return 0
+                            
+                        loc_selection = col_p2.selectbox("LOCATION MULTIPLIER (TIER):", options=list(loc_tiers.keys()), index=get_index_or_default(active_prop["Location_Tier"], loc_tiers), key="rent_prop_loc")
+                        type_selection = col_p2.selectbox("PROPERTY CLASSIFICATION:", options=list(prop_types.keys()), index=get_index_or_default(active_prop["Property_Type"], prop_types), key="rent_prop_type")
+                        demand_selection = col_p2.selectbox("POPULATION DENSITY / DEMAND FACTOR:", options=list(demand_factors.keys()), index=get_index_or_default(active_prop["Demand_Factor"], demand_factors), key="rent_prop_demand")
+                        
+                        mult_loc = loc_tiers[loc_selection]
+                        mult_type = prop_types[type_selection]
+                        mult_demand = demand_factors[demand_selection]
+                        
+                        calculated_base_rent = int(area_sqft * base_rate_sqft * mult_loc * mult_type * mult_demand)
+                        
+                        active_prop["Name"] = prop_name
+                        active_prop["Area"] = area_sqft
+                        active_prop["Base_Rate"] = base_rate_sqft
+                        active_prop["Location_Tier"] = loc_selection
+                        active_prop["Property_Type"] = type_selection
+                        active_prop["Demand_Factor"] = demand_selection
+                        props[0] = active_prop
+                        st.session_state[f"properties_{client['Client_ID']}"] = props
+                        
+                    # Live Scrape cross-reference expander for Rent SOW
+                    search_q = "average monthly commercial property rent yield"
+                    serp_key = os.getenv("SERPAPI_KEY")
+                    with st.spinner("Scraping live rent indices..."):
+                        sources = fetch_real_benchmark_sources(search_q, serp_key, llm_choice, api_key)
+                        
+                    with st.expander("📄 VIEW VERIFIED SOURCE SNIPPETS & COMPLIANCE LINKS", expanded=False):
+                        st.write("**Verify Plausibility Reference Source:**")
+                        source_options = [f"{s['src']} : INR {s['val']}/mo" for s in sources]
+                        selected_option = st.radio(
+                            "SELECT VERIFIED REFERENCE SOURCE (Updates Trend Chart):",
+                            options=source_options,
+                            key=f"calibration_selector_{active_sow}"
+                        )
+                        selected_idx = source_options.index(selected_option)
+                        bench_val = sources[selected_idx]["val"]
+                        snippet_text = sources[selected_idx]["snip"]
+                        source_url = sources[selected_idx]["link"]
+                        
+                        st.markdown("---")
+                        st.markdown(f"**Verified Source URL:** [Open Source Site]({source_url})")
+                        st.markdown(f"**Scraped Context/Snippet:** *{snippet_text}*")
+                        
+                    # 2. Display Plausibility Math Card
+                    col_math_val, col_math_formula = st.columns([2, 3])
+                    
+                    avg_actual_rent = client_sow_df['Gross_Salary'].mean() if not client_sow_df.empty else 0
+                    conformance_ratio = (avg_actual_rent / calculated_base_rent) if calculated_base_rent > 0 else 0
+                    
+                    if 0.75 <= conformance_ratio <= 1.25:
+                        rating_badge = "<span style='border:2px solid #00FFAA; color:#00FFAA; padding:5px 12px; font-weight:bold; font-size:14px; text-transform:uppercase;'>HIGH CONFORMANCE (VERIFIED)</span>"
+                        rating_color = "#00FFAA"
+                    elif conformance_ratio > 1.25:
+                        rating_badge = "<span style='border:2px solid #FF003C; color:#FF003C; padding:5px 12px; font-weight:bold; font-size:14px; text-transform:uppercase;'>ANOMALOUS OVER-YIELD (LAUNDERING RISK)</span>"
+                        rating_color = "#FF003C"
+                    else:
+                        rating_badge = "<span style='border:2px solid #FF9900; color:#FF9900; padding:5px 12px; font-weight:bold; font-size:14px; text-transform:uppercase;'>UNDER-YIELD DEFICIENCY</span>"
+                        rating_color = "#FF9900"
+                        
+                    with col_math_val:
+                        st.markdown(f"""
+                        <div class="profile-card" style="border-top: 4px solid {rating_color};">
+                            <h4 style="color:var(--meta-label); font-size:12px; margin:0 0 8px 0; text-transform:uppercase;">Calculated Yield Plausibility</h4>
+                            <h2 style="margin:0 0 15px 0; font-size:24px; color:#FFDF00 !important;">INR {calculated_base_rent:,} / mo</h2>
+                            <div style="margin-top:10px;">
+                                <p style="font-size:11px; color:var(--meta-label); margin:0 0 5px 0; text-transform:uppercase;">Fiduciary Conformance Rating:</p>
+                                {rating_badge}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                    with col_math_formula:
+                        st.markdown(f"""
+                        <div class="profile-card" style="border-top: 4px solid #1E60FF;">
+                            <h4 style="color:var(--meta-label); font-size:12px; margin:0 0 8px 0; text-transform:uppercase;">Plausibility Valuation Formula</h4>
+                            <code style="font-family:'Courier New', monospace; font-size:13px; color:#00D2FF; font-weight:bold; display:block; padding:10px; background:#16171d; border:1px solid #2d2d30; margin-bottom:10px;">
+                            Rent = Area * Rate * Loc_Mult * Type_Mult * Density_Mult
+                            </code>
+                            <div style="font-size:12px; line-height:1.5;">
+                                Rent = {area_sqft:,} sq.ft. * {base_rate_sqft} INR * {mult_loc} (Loc) * {mult_type} (Type) * {mult_demand} (Density)<br>
+                                <b>Calculated Base Rental Benchmark = INR {calculated_base_rent:,} / mo</b>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                    # Calculate staircase escalative benchmark (10% raise every 12 months)
+                    benchmark_vals = []
+                    for i, d in enumerate(merged['Date_Parsed']):
+                        # Apply 10% compounding rent raise every 12 months
+                        escalation_periods = i // 12
+                        escalated_benchmark = int(calculated_base_rent * (1.10 ** escalation_periods))
+                        benchmark_vals.append(escalated_benchmark)
+                    merged['Benchmark_Rent'] = benchmark_vals
+                    
+
+                    
+                    # Interpolate gaps using escalative benchmark
+                    missing = merged[merged['Gross_Salary'].isna()].copy()
+                    if not missing.empty:
+                        missing['Expected_Salary'] = [merged.loc[idx, 'Benchmark_Rent'] for idx in missing.index]
+                        fig_trend.add_scatter(x=missing['Date_Parsed'], y=missing['Expected_Salary'], mode='markers', marker=dict(color=client_color, size=12, symbol='x'), name='Missing Voucher (Escalated Benchmark)')
+                        
+                # --- DRIVER 3: CORPORATE EQUITY LIQUIDATION (SCRAPER OVERVIEW) ---
+                else:
+                    # Retrieve index sources via SerpAPI Google Scraper
+                    st.write("### 📈 CORPORATE EQUITY LIQUIDATION AUDIT")
+                    search_q = "average corporate executive stock dividend payout"
+                    serp_key = os.getenv("SERPAPI_KEY")
+                    
+                    with st.spinner("Scraping global market indices..."):
+                        sources = fetch_real_benchmark_sources(search_q, serp_key, llm_choice, api_key)
+                        
+                    with st.expander("📄 VIEW VERIFIED SOURCE SNIPPETS & COMPLIANCE LINKS", expanded=True):
+                        st.write("**Verify Plausibility Reference Source:**")
+                        source_options = [f"{s['src']} : INR {s['val']}/mo" for s in sources]
+                        selected_option = st.radio(
+                            "SELECT VERIFIED REFERENCE SOURCE (Updates Trend Chart):",
+                            options=source_options,
+                            key=f"calibration_selector_{active_sow}"
+                        )
+                        
+                        selected_idx = source_options.index(selected_option)
+                        bench_val = sources[selected_idx]["val"]
+                        snippet_text = sources[selected_idx]["snip"]
+                        source_url = sources[selected_idx]["link"]
+                        
+                        st.markdown("---")
+                        st.markdown(f"**Verified Source URL:** [Open Source Site]({source_url})")
+                        st.markdown(f"**Scraped Context/Snippet:** *{snippet_text}*")
+                        
+
+                    
+                    # Interpolate gaps using selected bench_val
+                    missing = merged[merged['Gross_Salary'].isna()].copy()
+                    if not missing.empty and bench_val > 0:
+                        merged['Interpolated'] = merged['Gross_Salary'].interpolate(method='linear', limit_direction='both')
+                        missing['Expected_Salary'] = merged.loc[missing.index, 'Interpolated']
+                        fig_trend.add_scatter(x=missing['Date_Parsed'], y=missing['Expected_Salary'], mode='markers', marker=dict(color=client_color, size=12, symbol='x'), name='Missing Voucher (Interpolated)')
                 
-                # Interpolate Gaps using selected bench_val
-                missing = merged[merged['Gross_Salary'].isna()].copy()
-                if not missing.empty and bench_val > 0:
-                    base_year = 2023
-                    inflation_rate = 0.08
-                    merged['Interpolated'] = merged['Gross_Salary'].interpolate(method='linear', limit_direction='both')
-                    missing['Expected_Salary'] = merged.loc[missing.index, 'Interpolated']
-                    
-                    fig_trend.add_scatter(x=missing['Date_Parsed'], y=missing['Expected_Salary'], mode='markers', marker=dict(color=client_color, size=12, symbol='x'), name='Missing Voucher (Interpolated)')
-                    
-                fig_trend.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="var(--text-color)"), hovermode="x unified")
-                fig_trend.update_xaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)')
-                fig_trend.update_yaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)')
+                # Plot Actuals (Always added first/on top)
+                if active_sow != "Executive Yield (Salary)":
+                    fig_trend.add_scatter(x=merged['Date_Parsed'], y=merged['Gross_Salary'], mode='lines+markers', name='Actual Audited Proof', line=dict(color=client_color, width=2.5), connectgaps=False)
+                
+                # Chart styling and rendering
+                fig_trend.update_layout(
+                    title=dict(text="CAPITAL STREAM COMPLIANCE TREND (2019 - 2023)", font=dict(family="Helvetica Neue, sans-serif", size=16, color="var(--text-color)")),
+                    paper_bgcolor='rgba(0,0,0,0)', 
+                    plot_bgcolor='rgba(0,0,0,0)', 
+                    font=dict(color="var(--text-color)"), 
+                    hovermode="x unified"
+                )
+                fig_trend.update_xaxes(type='date', showgrid=True, gridwidth=1, gridcolor='var(--border-color)')
+                fig_trend.update_yaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)', title_text="Amount in INR")
                 st.plotly_chart(fig_trend, use_container_width=True)
                 
-                # D. Volatility
+                # D. Volatility (Percentage MoM Change)
                 st.subheader("YIELD VARIANCE & VOLATILITY PROFILE (MoM % CHANGE)")
                 client_sow_df['MoM_Change_%'] = client_sow_df['Gross_Salary'].pct_change() * 100
-                fig_mom = px.bar(client_sow_df, x="Date_Parsed", y="MoM_Change_%")
+                fig_mom = px.bar(client_sow_df, x="Date_Parsed", y="MoM_Change_%", color_discrete_sequence=['#FF333c'])
                 fig_mom.add_hline(y=10.0, line_dash="dash", line_color="#FF3333", annotation_text="Anomaly Threshold (+10%)")
                 fig_mom.add_hline(y=-10.0, line_dash="dash", line_color="#FF3333", annotation_text="Anomaly Threshold (-10%)")
                 fig_mom.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="var(--text-color)"))
                 fig_mom.update_xaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)')
-                fig_mom.update_yaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)')
+                fig_mom.update_yaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)', title_text="MoM % Change")
                 st.plotly_chart(fig_mom, use_container_width=True)
                 
+                # Deficiency log export
                 missing_dates = ideal_dates.difference(pd.to_datetime(client_sow_df['Date_Parsed']).dt.tz_localize(None))
                 csv_missing = pd.DataFrame([{"Client_ID": client["Client_ID"], "SOW_Driver": active_sow, "Date": d.strftime('%b %Y')} for d in missing_dates]).to_csv(index=False).encode('utf-8')
                 st.download_button("EXPORT MISSING LOG (CSV)", data=csv_missing, file_name=f"{client['Client_ID']}_missing_{active_sow.replace(' ', '_')}.csv", mime="text/csv")

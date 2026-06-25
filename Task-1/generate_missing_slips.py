@@ -20,9 +20,9 @@ df['Date_Parsed'] = pd.to_datetime(df['Month_Year'], format='%b %Y', errors='coe
 
 # Mapping & metadata
 clients = {
-    "C-1001": {"Name": "Robert Kramer", "Job_Title": "Software Engineer", "Base": 65000},
-    "C-1002": {"Name": "Priya Patel", "Job_Title": "Relationship Manager", "Base": 85000},
-    "C-1003": {"Name": "Vikram Biswas", "Job_Title": "Data Analyst", "Base": 50000}
+    "C-1001": {"Name": "Robert Kramer", "Job_Title": "Software Engineer"},
+    "C-1002": {"Name": "Priya Patel", "Job_Title": "Relationship Manager"},
+    "C-1003": {"Name": "Vikram Seth", "Job_Title": "Data Analyst"}
 }
 
 sow_map = {
@@ -30,6 +30,30 @@ sow_map = {
     "Corporate Equity Liquidation": "Equity",
     "Real Estate Yield (Rent)": "Rent"
 }
+
+def get_dynamic_base(client_id, date_obj, sow_driver):
+    if sow_driver == "Executive Yield (Salary)":
+        if client_id == "C-1001":
+            return 250000 if date_obj < datetime(2021, 7, 1) else 280000
+        elif client_id == "C-1002":
+            return 130000 if date_obj < datetime(2021, 1, 1) else 160000
+        elif client_id == "C-1003":
+            return 150000 if date_obj < datetime(2022, 1, 1) else 180000
+    elif sow_driver == "Real Estate Yield (Rent)":
+        if client_id == "C-1001":
+            months_elapsed = (date_obj.year - 2019) * 12 + (date_obj.month - 1)
+            year_idx = months_elapsed // 12
+            return int(1485120 * (1.10 ** year_idx))
+        elif client_id == "C-1003":
+            months_elapsed = (date_obj.year - 2019) * 12 + (date_obj.month - 1)
+            year_idx = months_elapsed // 12
+            return int(70000 * (1.10 ** year_idx))
+    elif sow_driver == "Corporate Equity Liquidation":
+        if client_id == "C-1001":
+            return 120000
+        elif client_id == "C-1002":
+            return 200000
+    return 100000
 
 def draw_pdf(rec, sow_type):
     """Draws custom SOW PDF voucher."""
@@ -45,9 +69,9 @@ def draw_pdf(rec, sow_type):
     c.drawString(50, 680, f"Name: {rec['Name']}")
     c.drawString(50, 660, f"Job Title/SOW Role: {rec['Job_Title']}")
     c.drawString(50, 640, f"Month/Year: {rec['Month_Year']}")
-    c.drawString(50, 600, f"Gross Amount: INR {rec['Gross_Salary']}")
-    c.drawString(50, 580, f"Tax / Fees: INR {rec['Tax']}")
-    c.drawString(50, 560, f"Net Amount Received: INR {rec['Net_Salary']}")
+    c.drawString(50, 600, f"Gross Amount: INR {rec['Gross_Salary']:,}")
+    c.drawString(50, 580, f"Tax / Fees: INR {rec['Tax']:,}")
+    c.drawString(50, 560, f"Net Amount Received: INR {rec['Net_Salary']:,}")
     c.save()
 
 # 3. Locate gaps and generate
@@ -67,12 +91,27 @@ for cid, meta in clients.items():
         # Draw PDF vouchers for missing slots
         for m_date in missing_dates:
             month_year_str = m_date.strftime("%b %Y")
-            gross = meta["Base"]
-            tax = int(gross * 0.15)
+            gross = get_dynamic_base(cid, m_date, driver)
+            tax = int(gross * 0.15) if driver == "Executive Yield (Salary)" else (int(gross * 0.10) if driver == "Real Estate Yield (Rent)" else int(gross * 0.10))
+            
+            # Determine job role for document
+            job_role = meta["Job_Title"]
+            if driver == "Executive Yield (Salary)":
+                if cid == "C-1001":
+                    job_role = "Software Engineer"
+                elif cid == "C-1002":
+                    job_role = "Relationship Manager"
+                elif cid == "C-1003":
+                    job_role = "Data Analyst"
+            elif driver == "Real Estate Yield (Rent)":
+                job_role = "Property Landlord"
+            elif driver == "Corporate Equity Liquidation":
+                job_role = "Shareholder / Director"
+                
             rec = {
                 "Client_ID": cid,
                 "Name": meta["Name"],
-                "Job_Title": meta["Job_Title"],
+                "Job_Title": job_role,
                 "Month_Year": month_year_str,
                 "Gross_Salary": gross,
                 "Tax": tax,
