@@ -1,7 +1,10 @@
 # db.py
 import os
+from pathlib import Path
 import pandas as pd
 import streamlit as st
+
+BASE_DIR = Path(__file__).parent
 
 SOW_CATEGORIES = [
     "Executive Yield (Salary)",
@@ -13,7 +16,7 @@ SOW_CATEGORIES = [
 
 def scan_preloaded_pdfs():
     """Scans mock_data/pdfs and groups files dynamically by Client ID and SOW Category."""
-    pdf_dir = "mock_data/pdfs"
+    pdf_dir = BASE_DIR / "mock_data" / "pdfs"
     sow_map = {
         "salary": "Executive Yield (Salary)",
         "equity": "Corporate Equity Liquidation",

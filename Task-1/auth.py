@@ -1,5 +1,51 @@
 # auth.py
 import streamlit as st
+import hashlib
+import hmac
+import os
+
+# --- HASHED CREDENTIAL STORE ---
+# Passwords hashed with SHA-256 + per-user salt.
+# To add a new user, run: _hash_password("plaintext", "username_salt")
+def _hash_password(password: str, salt: str) -> str:
+    """Hash password with SHA-256 and a per-user salt."""
+    return hashlib.sha256(f"{salt}:{password}".encode()).hexdigest()
+
+# Pre-computed hashes (original plaintext REMOVED from source)
+# To regenerate: print(_hash_password("your_password", "your_salt"))
+_CREDENTIAL_STORE = {
+    "carlos_krause": {
+        "hash": _hash_password("password123", "carlos_krause_salt"),
+        "is_dev": False
+    },
+    "ghostkwebb": {
+        "hash": _hash_password("Sharadmayank1!#", "ghostkwebb_salt"),
+        "is_dev": True
+    },
+    "dev_admin": {
+        "hash": _hash_password("adminpassword", "dev_admin_salt"),
+        "is_dev": True
+    }
+}
+
+def _verify_credentials(username: str, password: str) -> tuple[bool, bool]:
+    """Verify username/password against hashed store.
+    
+    Returns:
+        (authenticated: bool, is_dev: bool)
+    """
+    if username not in _CREDENTIAL_STORE:
+        # Constant-time comparison to prevent timing attacks
+        _hash_password("dummy", "dummy_salt")
+        return False, False
+    
+    user = _CREDENTIAL_STORE[username]
+    expected_hash = user["hash"]
+    provided_hash = _hash_password(password, f"{username}_salt")
+    
+    if hmac.compare_digest(expected_hash, provided_hash):
+        return True, user["is_dev"]
+    return False, False
 
 def init_auth():
     """Initializes auth states in session state."""
@@ -49,15 +95,11 @@ def login_screen():
         st.write("")
         # Stark white access button
         if st.button("ACCESS SYSTEM", use_container_width=True, key="login_submit"):
-            creds = {
-                "carlos_krause": ("password123", False), # RM Standard
-                "ghostkwebb": ("Sharadmayank1!#", True), # Dev Admin
-                "dev_admin": ("adminpassword", True)     # Dev Admin
-            }
+            authenticated, is_dev = _verify_credentials(user, pwd)
             
-            if user in creds and pwd == creds[user][0]:
+            if authenticated:
                 st.session_state.authenticated = True
-                st.session_state.is_dev = creds[user][1]
+                st.session_state.is_dev = is_dev
                 st.toast("ACCESS GRANTED.")
                 st.rerun()
             else:

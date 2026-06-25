@@ -3,8 +3,11 @@ import streamlit as st
 import pandas as pd
 import pdfplumber
 import re
+import html as html_module
+import logging
 import plotly.express as px
 import os
+from pathlib import Path
 import db  
 import auth
 from datetime import datetime
@@ -14,6 +17,21 @@ from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from serpapi import GoogleSearch
+
+# --- LOGGING ---
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# --- PATH CONFIG ---
+BASE_DIR = Path(__file__).parent
+MOCK_DATA_DIR = BASE_DIR / "mock_data"
+CSV_PATH = MOCK_DATA_DIR / "client_summary.csv"
+PDF_DIR = MOCK_DATA_DIR / "pdfs"
+
+
+def _esc(val):
+    """HTML-escape a value for safe injection into markup."""
+    return html_module.escape(str(val))
 
 # --- ADVANCED BENCHMARK DATABASE & UTILITIES ---
 COMPANY_SALARIES = {
@@ -114,7 +132,7 @@ load_dotenv()
 st.set_page_config(page_title="Origin of Capital Portal", layout="wide")
 
 # --- INJECT LIGHT/DARK MODE TOGGLE ---
-st.components.v1.html("""
+st.html("""
 <script>
 const parentDoc = window.parent.document;
 
@@ -230,7 +248,7 @@ function initThemeToggle() {
 
 initThemeToggle();
 </script>
-""", height=0)
+""")
 
 # --- STARK SWISS NEO-BRUTALIST STYLING ---
 st.markdown("""
@@ -763,23 +781,35 @@ def fetch_real_benchmark_sources(job_title, serp_key, llm_choice, groq_key):
         return fallbacks
 
 def parse_pdf(file, llm_choice, api_key):
-    """Parses PDF slips using Hybrid OCR/regex parser."""
+    """Parses PDF slips using Hybrid OCR/regex parser.
+    
+    Handles both 'Gross Salary' and 'Gross Amount' field names,
+    and comma-formatted numbers (e.g., '1,485,120').
+    """
     text = ""
     with pdfplumber.open(file) as pdf:
         for page in pdf.pages: text += (page.extract_text() or "") + "\n"
     try:
+        # Match both 'Job Title:' and 'Job Title/SOW Role:'
+        job_match = re.search(r"Job Title(?:/SOW Role)?:\s*(.+)", text)
+        # Match both 'Gross Salary:' and 'Gross Amount:' with comma-formatted numbers
+        gross_match = re.search(r"Gross (?:Salary|Amount):\s*INR\s*([\d,]+)", text)
+        
         return {
             "Client_ID": re.search(r"Client ID:\s*(.+)", text).group(1).strip(), 
             "Name": re.search(r"Name:\s*(.+)", text).group(1).strip(), 
-            "Job_Title": re.search(r"Job Title:\s*(.+)", text).group(1).strip(), 
+            "Job_Title": job_match.group(1).strip(), 
             "Month_Year": re.search(r"Month/Year:\s*(.+)", text).group(1).strip(), 
-            "Gross_Salary": float(re.search(r"Gross Salary:\s*INR\s*(\d+)", text).group(1))
+            "Gross_Salary": float(gross_match.group(1).replace(",", ""))
         }
     except AttributeError:
+        logger.warning(f"Regex parse failed for PDF, falling back to LLM extraction. Text preview: {text[:200]}")
         if llm_choice == "Groq (Cloud)": llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=api_key, temperature=0)
         else: llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="local-model", temperature=0)
         try: return llm.with_structured_output(SalaryData).invoke(f"Extract details.\n\nText: {text}").model_dump()
-        except Exception: return None
+        except Exception as e:
+            logger.error(f"LLM extraction also failed: {e}")
+            return None
 
 
 
@@ -792,8 +822,8 @@ if "selected_sow" not in st.session_state:
 
 # --- LEFT SIDEBAR NAVIGATION SYSTEM ---
 st.sidebar.markdown(f"""
-<div style="background-color: #121318; border: 2px solid #2d2d30; padding: 15px; margin-bottom: 20px; box-shadow: 4px 4px 0px #1E60FF;">
-    <h2 style="font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 900; color: #FFFFFF; margin: 0; text-align: center; text-transform: uppercase; letter-spacing: 1px; font-size: 20px;">EY FIDUCIARY</h2>
+<div style="background-color: var(--card-bg); border: 2px solid var(--border-color); padding: 15px; margin-bottom: 20px; box-shadow: 4px 4px 0px #1E60FF;">
+    <h2 style="font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 900; color: var(--text-color); margin: 0; text-align: center; text-transform: uppercase; letter-spacing: 1px; font-size: 20px;">EY FIDUCIARY</h2>
     <p style="font-size: 11px; color: #00D2FF; margin: 5px 0 0 0; text-align: center; font-family: 'Courier New', monospace; font-weight: bold; text-transform: uppercase;">VERACITY GATEWAY</p>
 </div>
 """, unsafe_allow_html=True)
@@ -898,14 +928,14 @@ if client:
         with col_meta:
             st.markdown(f"""
             <div class="profile-card">
-                <div class="profile-meta-item"><b>Client Nationality:</b> <span>{client['Nationality']}</span></div>
-                <div class="profile-meta-item"><b>Relationship Since:</b> <span>{client['Relationship_Since']}</span></div>
-                <div class="profile-meta-item"><b>Region:</b> <span>{client['Region']}</span></div>
-                <div class="profile-meta-item"><b>Sub-Region:</b> <span>{client['Sub_Region']}</span></div>
-                <div class="profile-meta-item"><b>Account Number:</b> <span>{client['Account_Number']}</span></div>
-                <div class="profile-meta-item"><b>RM Name:</b> <span>{client['RM_Name']}</span></div>
-                <div class="profile-meta-item"><b>Main Inception Industry:</b> <span>{client['Industry']}</span></div>
-                <div class="profile-meta-item"><b>Main SOW Country:</b> <span>{client['Country']}</span></div>
+                <div class="profile-meta-item"><b>Client Nationality:</b> <span>{_esc(client['Nationality'])}</span></div>
+                <div class="profile-meta-item"><b>Relationship Since:</b> <span>{_esc(client['Relationship_Since'])}</span></div>
+                <div class="profile-meta-item"><b>Region:</b> <span>{_esc(client['Region'])}</span></div>
+                <div class="profile-meta-item"><b>Sub-Region:</b> <span>{_esc(client['Sub_Region'])}</span></div>
+                <div class="profile-meta-item"><b>Account Number:</b> <span>{_esc(client['Account_Number'])}</span></div>
+                <div class="profile-meta-item"><b>RM Name:</b> <span>{_esc(client['RM_Name'])}</span></div>
+                <div class="profile-meta-item"><b>Main Inception Industry:</b> <span>{_esc(client['Industry'])}</span></div>
+                <div class="profile-meta-item"><b>Main SOW Country:</b> <span>{_esc(client['Country'])}</span></div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -1047,13 +1077,14 @@ if client:
             
             # B. MARKET PLAUSIBILITY CALIBRATION & BENCHMARKING
             try:
-                full_db_df = pd.read_csv("mock_data/client_summary.csv")
+                full_db_df = pd.read_csv(CSV_PATH)
                 full_db_df['Date_Parsed'] = pd.to_datetime(full_db_df['Month_Year'], format='%b %Y', errors='coerce')
                 client_sow_df = full_db_df[
                     (full_db_df['Client_ID'] == client['Client_ID']) & 
                     (full_db_df['SOW_Driver'] == active_sow)
                 ].sort_values('Date_Parsed')
-            except FileNotFoundError:
+            except (FileNotFoundError, pd.errors.EmptyDataError) as e:
+                logger.warning(f"SOW data load failed: {e}")
                 client_sow_df = pd.DataFrame()
                 
             if not client_sow_df.empty:
@@ -1195,6 +1226,9 @@ if client:
                 elif active_sow == "Real Estate Yield (Rent)":
                     st.write("### 🏢 REAL ESTATE YIELD PLAUSIBILITY ENGINE")
                     props = get_properties(client['Client_ID'])
+                    if not props:
+                        st.warning("No properties registered for this client. Cannot compute rent plausibility.")
+                        st.stop()
                     active_prop = props[0] # Focus on primary property
                     
                     with st.expander("🛠️ AUDIT PROPERTY PARAMETERS & COEFFICIENTS", expanded=True):
@@ -1271,9 +1305,12 @@ if client:
                     col_math_val, col_math_formula = st.columns([2, 3])
                     
                     avg_actual_rent = client_sow_df['Gross_Salary'].mean() if not client_sow_df.empty else 0
-                    conformance_ratio = (avg_actual_rent / calculated_base_rent) if calculated_base_rent > 0 else 0
+                    conformance_ratio = (avg_actual_rent / calculated_base_rent) if calculated_base_rent > 0 else None
                     
-                    if 0.75 <= conformance_ratio <= 1.25:
+                    if conformance_ratio is None:
+                        rating_badge = "<span style='border:2px solid #555555; color:#888888; padding:5px 12px; font-weight:bold; font-size:14px; text-transform:uppercase;'>INSUFFICIENT DATA</span>"
+                        rating_color = "#555555"
+                    elif 0.75 <= conformance_ratio <= 1.25:
                         rating_badge = "<span style='border:2px solid #00FFAA; color:#00FFAA; padding:5px 12px; font-weight:bold; font-size:14px; text-transform:uppercase;'>HIGH CONFORMANCE (VERIFIED)</span>"
                         rating_color = "#00FFAA"
                     elif conformance_ratio > 1.25:
@@ -1377,18 +1414,27 @@ if client:
                 )
                 fig_trend.update_xaxes(type='date', showgrid=True, gridwidth=1, gridcolor='var(--border-color)')
                 fig_trend.update_yaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)', title_text="Amount in INR")
-                st.plotly_chart(fig_trend, use_container_width=True)
+                st.plotly_chart(fig_trend, width='stretch')
                 
-                # D. Volatility (Percentage MoM Change)
+                # D. Volatility (Percentage MoM Change) — reindexed on full date range
                 st.subheader("YIELD VARIANCE & VOLATILITY PROFILE (MoM % CHANGE)")
-                client_sow_df['MoM_Change_%'] = client_sow_df['Gross_Salary'].pct_change() * 100
-                fig_mom = px.bar(client_sow_df, x="Date_Parsed", y="MoM_Change_%", color_discrete_sequence=['#FF333c'])
-                fig_mom.add_hline(y=10.0, line_dash="dash", line_color="#FF3333", annotation_text="Anomaly Threshold (+10%)")
-                fig_mom.add_hline(y=-10.0, line_dash="dash", line_color="#FF3333", annotation_text="Anomaly Threshold (-10%)")
+                # Reindex on complete date range to avoid gapped pct_change
+                volatility_df = client_sow_df.set_index('Date_Parsed')['Gross_Salary'].reindex(ideal_dates).to_frame().reset_index()
+                volatility_df.columns = ['Date_Parsed', 'Gross_Salary']
+                volatility_df['MoM_Change_%'] = volatility_df['Gross_Salary'].pct_change() * 100
+                volatility_df = volatility_df.dropna(subset=['MoM_Change_%'])
+                # Dynamic threshold: rolling mean ± 2σ
+                rolling_mean = volatility_df['MoM_Change_%'].rolling(window=6, min_periods=2).mean()
+                rolling_std = volatility_df['MoM_Change_%'].rolling(window=6, min_periods=2).std()
+                upper_threshold = rolling_mean + 2 * rolling_std
+                lower_threshold = rolling_mean - 2 * rolling_std
+                fig_mom = px.bar(volatility_df, x="Date_Parsed", y="MoM_Change_%", color_discrete_sequence=['#FF333c'])
+                fig_mom.add_scatter(x=volatility_df['Date_Parsed'], y=upper_threshold, mode='lines', line=dict(dash='dash', color='#FF3333', width=1), name='Upper Threshold (+2σ)', showlegend=True)
+                fig_mom.add_scatter(x=volatility_df['Date_Parsed'], y=lower_threshold, mode='lines', line=dict(dash='dash', color='#FF3333', width=1), name='Lower Threshold (-2σ)', showlegend=True)
                 fig_mom.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="var(--text-color)"))
                 fig_mom.update_xaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)')
                 fig_mom.update_yaxes(showgrid=True, gridwidth=1, gridcolor='var(--border-color)', title_text="MoM % Change")
-                st.plotly_chart(fig_mom, use_container_width=True)
+                st.plotly_chart(fig_mom, width='stretch')
                 
                 # Deficiency log export
                 missing_dates = ideal_dates.difference(pd.to_datetime(client_sow_df['Date_Parsed']).dt.tz_localize(None))
@@ -1525,9 +1571,10 @@ with st.popover("💬 TERMINAL AI", use_container_width=False):
                 else:
                     with st.spinner("Processing..."):
                         try:
-                            full_db_df = pd.read_csv("mock_data/client_summary.csv")
+                            full_db_df = pd.read_csv(CSV_PATH)
                             df = full_db_df[full_db_df['Client_ID'] == client['Client_ID']]
-                        except:
+                        except (FileNotFoundError, pd.errors.EmptyDataError, pd.errors.ParserError) as e:
+                            logger.warning(f"Failed to load client data CSV: {e}")
                             df = pd.DataFrame()
                         
                         # --- NEW: DYNAMIC HIGH-SPEED CONTEXT SUMMARY ---
