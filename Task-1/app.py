@@ -136,8 +136,8 @@ st.html("""
 <script>
 const parentDoc = window.parent.document;
 
-const sunSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>`;
-const moonSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`;
+const sunSvg = atob("PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjQiLz48cGF0aCBkPSJNMTIgMnYyIi8+PHBhdGggZD0iTTEyIDIwdjIiLz48cGF0aCBkPSJNNC45MyA0LjkzbDEuNDEgMS40MSIvPjxwYXRoIGQ9Ik0xNy42NiAxNy42NmwxLjQxIDEuNDEiLz48cGF0aCBkPSJNMiAxMmgyIi8+PHBhdGggZD0iTTIwIDEyaDIiLz48cGF0aCBkPSJNNi4zNCAxNy42NmwtMS40MSAxLjQxIi8+PHBhdGggZD0iTTE5LjA3IDQuOTNsLTEuNDEgMS40MSIvPjwvc3ZnPg==");
+const moonSvg = atob("PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xMiAzYTYgNiAwIDAgMCA5IDkgOSA5IDAgMSAxLTktOVoiLz48L3N2Zz4=");
 
 async function toggleTheme(event) {
     const currentTheme = parentDoc.documentElement.getAttribute('data-theme') || 'dark';
@@ -248,7 +248,7 @@ function initThemeToggle() {
 
 initThemeToggle();
 </script>
-""")
+""", unsafe_allow_javascript=True)
 
 # --- STARK SWISS NEO-BRUTALIST STYLING ---
 st.markdown("""
@@ -298,8 +298,18 @@ st.markdown("""
     div[data-testid="stChatMessage"] { background-color: var(--chat-msg-bg) !important; border: 2px solid var(--border-color) !important; padding: 10px !important; margin-bottom: 10px !important; }
     div[data-testid="stChatMessage"] * { color: var(--text-color) !important; }
     
-    .stApp, .main, .stAppViewContainer { background-color: var(--bg-color) !important; font-family: 'Courier New', monospace !important; }
+    .stApp, .main, .stAppViewContainer, [data-testid="stSidebar"], [data-testid="stSidebarContent"], [data-testid="stSidebar"] > div { background-color: var(--bg-color) !important; font-family: 'Courier New', monospace !important; }
     h1, h2, h3, h4, p, span, label, div, li, summary, input { color: var(--text-color) !important; }
+    
+    /* Pin Sidebar Logout Button to Bottom */
+    [data-testid="stSidebarContent"] div.stVerticalBlock {
+        display: flex !important;
+        flex-direction: column !important;
+        min-height: calc(100vh - 80px) !important;
+    }
+    .st-key-sidebar_logout_btn {
+        margin-top: auto !important;
+    }
     
     /* Clean Swiss Typography - CENTERED & BLUE ACCENT */
     h1 { 
@@ -924,6 +934,16 @@ if client:
                 st.session_state.selected_sow = label.replace("💼 Audit: ", "")
                 st.session_state.view_mode = "compartment"
             st.rerun()
+
+# 3. Sidebar Logout Button
+st.sidebar.markdown("<hr style='border: 1px solid #2d2d30; margin-top: 40px; margin-bottom: 20px;'>", unsafe_allow_html=True)
+if st.sidebar.button("🚪 LOGOUT", key="sidebar_logout_btn", use_container_width=True):
+    st.session_state.authenticated = False
+    st.session_state.is_dev = False
+    st.session_state.active_client = None
+    st.session_state.view_mode = "summary"
+    st.toast("LOGGED OUT.")
+    st.rerun()
 
 # Main Page Title
 st.title("EY: FIDUCIARY VERACITY PORTAL")
@@ -1561,38 +1581,25 @@ else:
     </div>
     """, unsafe_allow_html=True)
     
-# --- SYSTEM SESSION CONTROL (Logout & Developer override) ---
+# --- SYSTEM SESSION CONTROL (Developer override) ---
 st.write("---")
-with st.expander("⚙️ SYSTEM SESSION CONTROL", expanded=False):
-    col_logout, col_dev = st.columns(2)
-    
-    with col_logout:
-        # Secure Logout Button
-        if st.button("🚪 LOGOUT", use_container_width=True):
-            st.session_state.authenticated = False
-            st.session_state.is_dev = False
-            st.session_state.active_client = None
-            st.session_state.view_mode = "summary"
-            st.toast("LOGGED OUT.")
+with st.expander("⚙️ SYSTEM ENGINE CONFIGURATION", expanded=False):
+    # Developer Override Switch (Only visible if logged in as ghostkwebb)
+    is_dev = st.session_state.get("is_dev", False)
+    if is_dev:
+        st.write("**🔧 DEVELOPER SYSTEM OVERRIDE ACTIVE**")
+        dev_selection = st.radio(
+            "Select Active Engine:", 
+            ["LM Studio (Local)", "Groq (Cloud)"], 
+            index=0 if st.session_state.dev_llm == "LM Studio (Local)" else 1, 
+            key="dev_llm_selector_radio_btn", 
+            horizontal=True
+        )
+        if dev_selection != st.session_state.dev_llm:
+            st.session_state.dev_llm = dev_selection
             st.rerun()
-            
-    with col_dev:
-        # Developer Override Switch (Only visible if logged in as ghostkwebb)
-        is_dev = st.session_state.get("is_dev", False)
-        if is_dev:
-            st.write("**🔧 DEVELOPER SYSTEM OVERRIDE ACTIVE**")
-            dev_selection = st.radio(
-                "Select Active Engine:", 
-                ["LM Studio (Local)", "Groq (Cloud)"], 
-                index=0 if st.session_state.dev_llm == "LM Studio (Local)" else 1, 
-                key="dev_llm_selector_radio_btn", 
-                horizontal=True
-            )
-            if dev_selection != st.session_state.dev_llm:
-                st.session_state.dev_llm = dev_selection
-                st.rerun()
-        else:
-            st.info("System Engine Status: Secured Cloud Mode")
+    else:
+        st.info("System Engine Status: Secured Cloud Mode")
 
 # --- TERMINAL AI WIDGET ---
 if "chat_history" not in st.session_state:
