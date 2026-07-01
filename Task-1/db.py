@@ -19,6 +19,10 @@ def scan_preloaded_pdfs():
     pdf_dir = BASE_DIR / "mock_data" / "pdfs"
     sow_map = {
         "salary": "Executive Yield (Salary)",
+        "salarypayslip": "Executive Yield (Salary)",
+        "taxform16": "Executive Yield (Salary)",
+        "bankstatement": "Executive Yield (Salary)",
+        "hrletter": "Executive Yield (Salary)",
         "equity": "Corporate Equity Liquidation",
         "rent": "Real Estate Yield (Rent)"
     }

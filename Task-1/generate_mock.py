@@ -31,21 +31,88 @@ def draw_pdf(rec, sow_type):
         "Corporate Equity Liquidation": "Equity",
         "Real Estate Yield (Rent)": "Rent"
     }
-    short_type = short_map[sow_type]
+    short_type = short_map.get(sow_type, sow_type)
+    
+    salary_subtypes = ["SalaryPayslip", "TaxForm16", "BankStatement", "HRLetter"]
+    if sow_type == "Executive Yield (Salary)":
+        h = sum(ord(c) for c in f"{rec['Client_ID']}_{rec['Month_Year']}")
+        short_type = salary_subtypes[h % len(salary_subtypes)]
+        
     pdf_path = f"mock_data/pdfs/{rec['Client_ID']}_{short_type}_{rec['Month_Year'].replace(' ', '_')}.pdf"
     
     c = canvas.Canvas(pdf_path, pagesize=letter)
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(200, 750, f"PROOF OF SOURCE: {sow_type.upper()}")
     
-    c.setFont("Helvetica", 12)
-    c.drawString(50, 700, f"Client ID: {rec['Client_ID']}")
-    c.drawString(50, 680, f"Name: {rec['Name']}")
-    c.drawString(50, 660, f"Job Title/SOW Role: {rec['Job_Title']}")
-    c.drawString(50, 640, f"Month/Year: {rec['Month_Year']}")
-    c.drawString(50, 600, f"Gross Amount: INR {rec['Gross_Salary']:,}")
-    c.drawString(50, 580, f"Tax / Fees: INR {rec['Tax']:,}")
-    c.drawString(50, 560, f"Net Amount Received: INR {rec['Net_Salary']:,}")
+    if short_type == "SalaryPayslip":
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(120, 750, "EMPLOYEE PAYSLIP / COMPENSATIONAL VOUCHER")
+        c.setFont("Helvetica", 11)
+        c.drawString(50, 700, f"Client ID: {rec['Client_ID']}")
+        c.drawString(50, 680, f"Employee Name: {rec['Name']}")
+        c.drawString(50, 660, f"Designation: {rec['Job_Title']}")
+        c.drawString(50, 640, f"Pay Period: {rec['Month_Year']}")
+        c.drawString(50, 600, f"Gross Earnings: INR {rec['Gross_Salary']:,}")
+        c.drawString(50, 580, f"Tax Deducted: INR {rec['Tax']:,}")
+        c.drawString(50, 560, f"Net Disbursed: INR {rec['Net_Salary']:,}")
+    elif short_type == "TaxForm16":
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(100, 750, "GOVERNMENT OF INDIA - INCOME TAX DEPARTMENT")
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(120, 730, "FORM 16: CERTIFICATE OF TAX DEDUCTED AT SOURCE")
+        c.setFont("Helvetica", 11)
+        c.drawString(50, 680, f"Taxpayer ID Reference: {rec['Client_ID']}")
+        c.drawString(50, 660, f"Taxpayer Name: {rec['Name']}")
+        c.drawString(50, 640, f"Employer Designation: {rec['Job_Title']}")
+        c.drawString(50, 620, f"Assessment Period: {rec['Month_Year']}")
+        c.drawString(50, 580, f"Gross Certified Compensation: INR {rec['Gross_Salary']:,}")
+        c.drawString(50, 560, f"Total Tax Deducted: INR {rec['Tax']:,}")
+        c.drawString(50, 540, f"Net Income Paid: INR {rec['Net_Salary']:,}")
+    elif short_type == "BankStatement":
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(140, 750, "SWISS METROPOLITAN BANK - CREDIT ADVICE")
+        c.setFont("Helvetica", 11)
+        c.drawString(50, 680, f"Account Holder Name: {rec['Name']}")
+        c.drawString(50, 660, f"Client ID Reference: {rec['Client_ID']}")
+        c.drawString(50, 640, f"Transaction Description: ACH CREDIT - SALARY DEPOSIT")
+        c.drawString(50, 620, f"Value Date / Period: {rec['Month_Year']}")
+        c.drawString(50, 580, f"Gross Transaction Amount: INR {rec['Gross_Salary']:,}")
+        c.drawString(50, 560, f"Tax Withheld: INR {rec['Tax']:,}")
+        c.drawString(50, 540, f"Net Deposited Amount: INR {rec['Net_Salary']:,}")
+    elif short_type == "HRLetter":
+        c.setFont("Helvetica-Bold", 15)
+        c.drawString(100, 750, "EMPLOYMENT & REMUNERATION VERIFICATION LETTER")
+        c.setFont("Helvetica", 11)
+        c.drawString(50, 700, "To Whom It May Concern,")
+        c.drawString(50, 680, f"This letter certifies that {rec['Name']} (ID: {rec['Client_ID']})")
+        c.drawString(50, 660, f"is employed as {rec['Job_Title']}.")
+        c.drawString(50, 640, f"For the auditing period of {rec['Month_Year']}, the compensation structure is:")
+        c.drawString(50, 600, f"Gross Monthly Salary: INR {rec['Gross_Salary']:,}")
+        c.drawString(50, 580, f"Tax Withholding: INR {rec['Tax']:,}")
+        c.drawString(50, 560, f"Net Compensation Disbursed: INR {rec['Net_Salary']:,}")
+    else:
+        # Corporate Equity or Rent SOW
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(200, 750, f"PROOF OF SOURCE: {sow_type.upper()}")
+        c.setFont("Helvetica", 12)
+        c.drawString(50, 700, f"Client ID: {rec['Client_ID']}")
+        c.drawString(50, 680, f"Name: {rec['Name']}")
+        c.drawString(50, 660, f"Job Title/SOW Role: {rec['Job_Title']}")
+        c.drawString(50, 640, f"Month/Year: {rec['Month_Year']}")
+        c.drawString(50, 600, f"Gross Amount: INR {rec['Gross_Salary']:,}")
+        c.drawString(50, 580, f"Tax / Fees: INR {rec['Tax']:,}")
+        c.drawString(50, 560, f"Net Amount Received: INR {rec['Net_Salary']:,}")
+
+    # Standardized compliance metadata block at the bottom
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(50, 150, "--- FIDUCIARY COMPLIANCE METADATA ---")
+    c.setFont("Helvetica", 10)
+    c.drawString(50, 130, f"Client ID: {rec['Client_ID']}")
+    c.drawString(50, 110, f"Name: {rec['Name']}")
+    c.drawString(50, 90, f"Job Title/SOW Role: {rec['Job_Title']}")
+    c.drawString(50, 70, f"Month/Year: {rec['Month_Year']}")
+    c.drawString(50, 50, f"Gross Amount: INR {rec['Gross_Salary']:,}")
+    c.drawString(50, 30, f"Tax / Fees: INR {rec['Tax']:,}")
+    c.drawString(50, 10, f"Net Amount Received: INR {rec['Net_Salary']:,}")
+    
     c.save()
 
 # 3. Generate 60 Months of Multi-Driver SOW data

@@ -387,6 +387,20 @@ st.markdown("""
     }
     .stButton>button:active { transform: translate(4px, 4px); }
 
+    /* Specific compact styling for View/Download buttons inside Ledger tabs */
+    div[role="tabpanel"] .stDownloadButton>button {
+        font-size: 11px !important;
+        padding: 4px 12px !important;
+        box-shadow: 3px 3px 0px var(--btn-shadow) !important;
+        max-width: 130px !important;
+        width: 130px !important;
+        margin: 0 auto !important;
+        display: block !important;
+    }
+    div[role="tabpanel"] .stDownloadButton>button:hover {
+        box-shadow: 0px 0px 0px var(--btn-shadow) !important;
+    }
+
     /* Visual Tabs - Centered blue accents */
     button[role="tab"] { 
         background-color: var(--tab-bg) !important; 
@@ -1042,8 +1056,34 @@ if client:
                         row_lbl.markdown(f"**{interval}**")
                         
                         if has_file:
-                            row_status.markdown("🟩 Received")
-                            row_act.write("`-`")
+                            matched_filename = next(f for f in sow_data["Slips"] if pattern in f)
+                            
+                            # Beautify the document type from filename
+                            # e.g. C-1001_TaxForm16_Jan_2019.pdf -> parts[1] is TaxForm16 -> "Tax Form 16"
+                            parts = matched_filename.split("_")
+                            doc_type_raw = parts[1] if len(parts) >= 2 else "Document"
+                            # Add spaces between camelcase
+                            doc_type = re.sub(r'(?<!^)(?=[A-Z])', ' ', doc_type_raw)
+                            
+                            row_status.markdown(f"🟩 {doc_type}")
+                            
+                            # Locate the file on disk
+                            file_path = PDF_DIR / matched_filename
+                            if not file_path.exists():
+                                file_path = BASE_DIR / "mock_data" / "test_missing_slips" / matched_filename
+                                
+                            if file_path.exists():
+                                with open(file_path, "rb") as f_bytes:
+                                    row_act.download_button(
+                                        label="DOWNLOAD",
+                                        data=f_bytes.read(),
+                                        file_name=matched_filename,
+                                        mime="application/pdf" if matched_filename.endswith(".pdf") else "application/octet-stream",
+                                        key=f"dl_{client['Client_ID']}_{active_sow}_{year}_{interval}",
+                                        use_container_width=False
+                                    )
+                            else:
+                                row_act.write("`Local file missing`")
                         else:
                             row_status.markdown("🟥 Missing")
                             # INDIVIDUAL INLINE UPLOADER PER MONTH
@@ -1062,6 +1102,11 @@ if client:
                                         # Verify Month & Year match
                                         extracted_month_year = f"{interval} {year}"
                                         if parsed["Client_ID"] == client["Client_ID"] and parsed["Month_Year"] == extracted_month_year:
+                                            # Write to local PDF folder
+                                            save_path = PDF_DIR / up_file.name
+                                            with open(save_path, "wb") as f_out:
+                                                f_out.write(up_file.getbuffer())
+                                                
                                             if db.add_document_to_sow(client["Client_ID"], active_sow, up_file.name):
                                                 st.toast(f"Linked {up_file.name} to {interval} {year}!")
                                                 st.session_state.active_client = db.get_client(client["Client_ID"])
@@ -1070,6 +1115,10 @@ if client:
                                             st.error(f"VERIFICATION FAILURE: File is for {parsed['Month_Year']}, expected {extracted_month_year}.")
                                 else:
                                     # Direct backfill
+                                    save_path = PDF_DIR / up_file.name
+                                    with open(save_path, "wb") as f_out:
+                                        f_out.write(up_file.getbuffer())
+                                        
                                     if db.add_document_to_sow(client["Client_ID"], active_sow, up_file.name):
                                         st.toast(f"Linked {up_file.name} successfully!")
                                         st.session_state.active_client = db.get_client(client["Client_ID"])
