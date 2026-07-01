@@ -129,7 +129,17 @@ def get_properties(client_id):
 
 # --- SETUP ---
 load_dotenv()
-st.set_page_config(page_title="Origin of Capital Portal", layout="wide")
+st.set_page_config(page_title="Client Wealth Audit Portal", layout="wide")
+
+def simplify_category(category_name: str) -> str:
+    mapping = {
+        "Executive Yield (Salary)": "Salary / Job Income",
+        "Corporate Equity Liquidation": "Company Stock Sales",
+        "Real Estate Yield (Rent)": "Rental Property Income",
+        "Venture Fund Divestments": "Venture Capital Divestments",
+        "Inheritance & Trust Payouts": "Inheritance & Trust Fund Payouts"
+    }
+    return mapping.get(category_name, category_name)
 
 # --- INJECT LIGHT/DARK MODE TOGGLE ---
 st.html("""
@@ -883,7 +893,7 @@ if search_selection != "Select Client...":
     if "active_client" not in st.session_state or not st.session_state.active_client or st.session_state.active_client["Client_ID"] != target_id:
         st.session_state.active_client = db.get_client(target_id)
         st.session_state.view_mode = "summary"
-        st.session_state.opened_tabs = ["👤 Profile Summary", "🛡️ Compliance Matrix"]
+        st.session_state.opened_tabs = ["👤 Profile Summary", "🛡️ Verification Status"]
         if "sidebar_navigation_radio" in st.session_state:
             del st.session_state.sidebar_navigation_radio
         st.rerun()
@@ -891,7 +901,7 @@ else:
     if "active_client" in st.session_state and st.session_state.active_client:
         st.session_state.active_client = None
         st.session_state.view_mode = "summary"
-        st.session_state.opened_tabs = ["👤 Profile Summary", "🛡️ Compliance Matrix"]
+        st.session_state.opened_tabs = ["👤 Profile Summary", "🛡️ Verification Status"]
         if "sidebar_navigation_radio" in st.session_state:
             del st.session_state.sidebar_navigation_radio
         st.rerun()
@@ -901,24 +911,22 @@ client = st.session_state.get("active_client")
 # 2. visual CDD progress matrix in Sidebar (if client selected)
 if client:
     # Dynamically determine which tabs to display in the sidebar
-    tabs_to_show = ["👤 Profile Summary", "🛡️ Compliance Matrix"]
+    tabs_to_show = ["👤 Profile Summary", "🛡️ Verification Status"]
     if st.session_state.view_mode == "compartment":
-        tabs_to_show.append(f"💼 Audit: {st.session_state.selected_sow}")
+        tabs_to_show.append(f"💼 Audit: {simplify_category(st.session_state.selected_sow)}")
         
     st.sidebar.markdown("<hr style='border: 1px solid #2d2d30; margin: 20px 0;'>", unsafe_allow_html=True)
-    st.sidebar.write("### 🛡️ CDD WORKSPACE NAVIGATION")
+    st.sidebar.write("### 🛡️ WORKSPACE NAVIGATION")
     
     # Render buttons as tabs (Only show the relevant ones!)
     for label in tabs_to_show:
         is_active = False
         if label == "👤 Profile Summary" and st.session_state.view_mode == "summary":
             is_active = True
-        elif label == "🛡️ Compliance Matrix" and st.session_state.view_mode == "matrix":
+        elif label == "🛡️ Verification Status" and st.session_state.view_mode == "matrix":
             is_active = True
         elif label.startswith("💼 Audit: ") and st.session_state.view_mode == "compartment":
-            target_sow = label.replace("💼 Audit: ", "")
-            if st.session_state.selected_sow == target_sow:
-                is_active = True
+            is_active = True
                 
         if st.sidebar.button(
             label, 
@@ -928,10 +936,9 @@ if client:
         ):
             if label == "👤 Profile Summary":
                 st.session_state.view_mode = "summary"
-            elif label == "🛡️ Compliance Matrix":
+            elif label == "🛡️ Verification Status":
                 st.session_state.view_mode = "matrix"
             elif label.startswith("💼 Audit: "):
-                st.session_state.selected_sow = label.replace("💼 Audit: ", "")
                 st.session_state.view_mode = "compartment"
             st.rerun()
 
@@ -946,7 +953,7 @@ if st.sidebar.button("🚪 LOGOUT", key="sidebar_logout_btn", use_container_widt
     st.rerun()
 
 # Main Page Title
-st.title("EY: FIDUCIARY VERACITY PORTAL")
+st.title("EY: CLIENT WEALTH AUDIT PORTAL")
 
 # Get active client data
 client = st.session_state.get("active_client")
@@ -956,7 +963,7 @@ if client:
     # --- PAGE 1: summary (Homepage Profile Summary) ---
     if st.session_state.view_mode == "summary":
         st.write("---")
-        st.header(f"CAPITAL GENESIS SUMMARY: {client['Name']}")
+        st.header(f"CLIENT WEALTH SUMMARY: {client['Name']}")
         
         col_meta, col_summary = st.columns(2)
         with col_meta:
@@ -968,14 +975,14 @@ if client:
                 <div class="profile-meta-item"><b>Sub-Region:</b> <span>{_esc(client['Sub_Region'])}</span></div>
                 <div class="profile-meta-item"><b>Account Number:</b> <span>{_esc(client['Account_Number'])}</span></div>
                 <div class="profile-meta-item"><b>RM Name:</b> <span>{_esc(client['RM_Name'])}</span></div>
-                <div class="profile-meta-item"><b>Main Inception Industry:</b> <span>{_esc(client['Industry'])}</span></div>
-                <div class="profile-meta-item"><b>Main SOW Country:</b> <span>{_esc(client['Country'])}</span></div>
+                <div class="profile-meta-item"><b>Client's Business Industry:</b> <span>{_esc(client['Industry'])}</span></div>
+                <div class="profile-meta-item"><b>Primary Country of Wealth Source:</b> <span>{_esc(client['Country'])}</span></div>
             </div>
             """, unsafe_allow_html=True)
             
         with col_summary:
             active_drivers = [k for k, v in client["SOW_Drivers"].items() if v["Applicable"]]
-            drivers_li = "".join(f"<li style='margin-bottom:6px;'>{d}</li>" for d in active_drivers)
+            drivers_li = "".join(f"<li style='margin-bottom:6px;'>{simplify_category(d)}</li>" for d in active_drivers)
             st.markdown(f"""
             <div class="profile-card">
                 <div>
@@ -983,7 +990,7 @@ if client:
                     <h1 style="border-bottom:none; color:#FFDF00 !important; font-size:36px; margin:8px 0 24px 0;">{client['Net_Worth']}</h1>
                 </div>
                 <div>
-                    <p style="font-weight:bold; color:#8a8a8f; margin-bottom:8px;">Capital Inflow Vectors:</p>
+                    <p style="font-weight:bold; color:#8a8a8f; margin-bottom:8px;">Sources of Wealth:</p>
                     <ul style="padding-left:20px; font-weight:bold; font-size:15px;">
                         {drivers_li}
                     </ul>
@@ -993,7 +1000,7 @@ if client:
             
         # Large Swiss White Button to move to Page 2
         st.write("---")
-        if st.button("🛡️ EXECUTE WEALTH VERACITY DUE DILIGENCE", use_container_width=True):
+        if st.button("🛡️ START WEALTH AUDIT CHECKLIST", use_container_width=True):
             st.session_state.view_mode = "matrix"
             st.rerun()
             
@@ -1004,13 +1011,13 @@ if client:
             st.session_state.view_mode = "summary"
             st.rerun()
             
-        st.header(f"ORIGIN OF CAPITAL MATRIX: {client['Name']}")
+        st.header(f"SOURCE OF WEALTH STATUS: {client['Name']}")
         
         # Clean Swiss Ledger Header
         col_h_name, col_h_src, col_h_act = st.columns([3, 2, 2])
-        col_h_name.write("**CAPITAL INFLOW STREAM**")
-        col_h_src.write("**INFLOW VERACITY RATING**")
-        col_h_act.write("**DUE DILIGENCE WORKSPACE**")
+        col_h_name.write("**MONEY SOURCE**")
+        col_h_src.write("**VERIFICATION STATUS**")
+        col_h_act.write("**ACTION**")
         st.markdown("<hr style='border: 1px solid #2d2d30; margin-top:0; margin-bottom:15px;'>", unsafe_allow_html=True)
         
         # Loop SOW Categories
@@ -1018,7 +1025,7 @@ if client:
             col_name, col_src, col_act = st.columns([3, 2, 2])
             
             # SOW Driver Name
-            col_name.markdown(f"<p style='font-size:18px; font-weight:bold; margin-top:10px;'>{category}</p>", unsafe_allow_html=True)
+            col_name.markdown(f"<p style='font-size:18px; font-weight:bold; margin-top:10px;'>{simplify_category(category)}</p>", unsafe_allow_html=True)
             
             # Minimalist Status Outline Badge
             status = data["Status"]
@@ -1033,7 +1040,7 @@ if client:
             col_src.markdown(f"<div style='margin-top:10px;'>{badge_html}</div>", unsafe_allow_html=True)
             
             # Drill-Down Action Button - Moves to Page 3
-            if col_act.button("🔍 AUDIT STREAM", key=f"btn_{client['Client_ID']}_{category}", use_container_width=True):
+            if col_act.button("🔍 CHECK FILES", key=f"btn_{client['Client_ID']}_{category}", use_container_width=True):
                 st.session_state.selected_sow = category
                 st.session_state.view_mode = "compartment"
                 st.rerun()
@@ -1041,21 +1048,21 @@ if client:
     # --- PAGE 3: compartment (Active Documentary Proof Compartment) ---
     elif st.session_state.view_mode == "compartment":
         st.write("---")
-        if st.button("← BACK TO COMPLIANCE MATRIX", use_container_width=True):
+        if st.button("← BACK TO VERIFICATION STATUS", use_container_width=True):
             st.session_state.view_mode = "matrix"
             st.rerun()
             
         active_sow = st.session_state.selected_sow
         sow_data = client["SOW_Drivers"][active_sow]
         
-        st.header(f"💼 DOCUMENTARY PROOF COMPARTMENT: {active_sow}")
+        st.header(f"💼 DOCUMENTS CHECKLIST: {simplify_category(active_sow)}")
         st.write("") # Padding
 
         periodic_drivers = ["Executive Yield (Salary)", "Corporate Equity Liquidation", "Real Estate Yield (Rent)"]
         
         # A. PERIODIC CHANNELS: 60-Month Grid with INDIVIDUAL Row Uploaders
         if active_sow in periodic_drivers:
-            st.write("### 📅 DOCUMENTARY VERIFICATION LEDGER")
+            st.write("### 📅 VERIFIED DOCUMENT LOG")
             years = ["2019", "2020", "2021", "2022", "2023"]
             tabs = st.tabs(years)
             
@@ -1158,7 +1165,7 @@ if client:
                 
             if not client_sow_df.empty:
                 st.write("---")
-                st.subheader("MARKET PLAUSIBILITY CALIBRATION")
+                st.subheader("MARKET RATES COMPARISON")
                 
                 bench_val = 0
                 ideal_dates = pd.date_range(start='2019-01-01', end='2023-12-01', freq='MS')
@@ -1171,9 +1178,9 @@ if client:
                     segments = get_career_segments(client['Client_ID'])
                     
                     # 1. Audited Career Pathway UI (Read-Only)
-                    st.write("### 💼 CAREER PATHWAY TIMELINE CDD")
-                    with st.expander("📄 VIEW ACTIVE CAREER PATHWAY (READ-ONLY)", expanded=True):
-                        st.markdown("<p style='font-size:13px; color:var(--meta-label);'>This career timeline is pre-registered in the secure client database. It defines the company-specific and role-specific benchmark thresholds for each period.</p>", unsafe_allow_html=True)
+                    st.write("### 💼 EMPLOYMENT TIMELINE CHECK")
+                    with st.expander("📄 VIEW EMPLOYMENT HISTORY (READ-ONLY)", expanded=True):
+                        st.markdown("<p style='font-size:13px; color:var(--meta-label);'>This career timeline defines the company-specific and role-specific typical salary rates for each period.</p>", unsafe_allow_html=True)
                         
                         st.write("**Current Employment Timeline:**")
                         cols_h = st.columns([2, 2, 3])
@@ -1193,8 +1200,8 @@ if client:
                     with st.spinner("Scraping live salary indices..."):
                         sources = fetch_real_benchmark_sources(search_q, serp_key, llm_choice, api_key)
                         
-                    with st.expander("📄 VIEW VERIFIED SOURCE SNIPPETS & COMPLIANCE LINKS", expanded=False):
-                        st.write("**Verify Plausibility Reference Source:**")
+                    with st.expander("📄 VIEW VERIFIED MARKET SOURCES", expanded=False):
+                        st.write("**Verify Market Reference Source:**")
                         source_options = [f"{s['src']} : INR {s['val']}/mo" for s in sources]
                         selected_option = st.radio(
                             "SELECT VERIFIED REFERENCE SOURCE (Updates Trend Chart):",
@@ -1276,7 +1283,7 @@ if client:
                                     y=seg_missing['Expected_Salary'],
                                     mode='markers',
                                     marker=dict(color=line_color, size=12, symbol='x'),
-                                    name=f"Missing Voucher ({company} Benchmark Expectation)",
+                                    name=f"Missing Document ({company} Expected Salary)",
                                     legendgroup=f"{company} ({seg['Job_Title']})",
                                     showlegend=False
                                 )
@@ -1287,20 +1294,20 @@ if client:
                             y=[None],
                             mode='markers',
                             marker=dict(color='#888888', size=10, symbol='x'),
-                            name='Missing Voucher (Benchmark Expectation)',
+                            name='Missing Document (Expected Salary)',
                             showlegend=True
                         )
-
+ 
                 # --- DRIVER 2: REAL ESTATE RENT (YIELD CALCULATOR) ---
                 elif active_sow == "Real Estate Yield (Rent)":
-                    st.write("### 🏢 REAL ESTATE YIELD PLAUSIBILITY ENGINE")
+                    st.write("### 🏢 REAL ESTATE RENTAL INCOME CHECK TOOL")
                     props = get_properties(client['Client_ID'])
                     if not props:
-                        st.warning("No properties registered for this client. Cannot compute rent plausibility.")
+                        st.warning("No properties registered for this client. Cannot check rental rates.")
                         st.stop()
                     active_prop = props[0] # Focus on primary property
                     
-                    with st.expander("🛠️ AUDIT PROPERTY PARAMETERS & COEFFICIENTS", expanded=True):
+                    with st.expander("🛠️ PROPERTY INCOME CHECK SETTINGS", expanded=True):
                         col_p1, col_p2 = st.columns(2)
                         prop_name = col_p1.text_input("PROPERTY IDENTIFIER:", value=active_prop["Name"], key="rent_prop_name")
                         area_sqft = col_p1.number_input("TOTAL PROPERTY AREA (SQ. FT.):", min_value=100, max_value=100000, value=active_prop["Area"], step=500, key="rent_prop_area")
@@ -1380,22 +1387,22 @@ if client:
                         rating_badge = "<span style='border:2px solid #555555; color:#888888; padding:5px 12px; font-weight:bold; font-size:14px; text-transform:uppercase;'>INSUFFICIENT DATA</span>"
                         rating_color = "#555555"
                     elif 0.75 <= conformance_ratio <= 1.25:
-                        rating_badge = "<span style='border:2px solid #00FFAA; color:#00FFAA; padding:5px 12px; font-weight:bold; font-size:14px; text-transform:uppercase;'>HIGH CONFORMANCE (VERIFIED)</span>"
+                        rating_badge = "<span style='border:2px solid #00FFAA; color:#00FFAA; padding:5px 12px; font-weight:bold; font-size:14px; text-transform:uppercase;'>MATCHES TYPICAL MARKET RATES</span>"
                         rating_color = "#00FFAA"
                     elif conformance_ratio > 1.25:
-                        rating_badge = "<span style='border:2px solid #FF003C; color:#FF003C; padding:5px 12px; font-weight:bold; font-size:14px; text-transform:uppercase;'>ANOMALOUS OVER-YIELD (LAUNDERING RISK)</span>"
+                        rating_badge = "<span style='border:2px solid #FF003C; color:#FF003C; padding:5px 12px; font-weight:bold; font-size:14px; text-transform:uppercase;'>UNUSUALLY HIGH RENT (POTENTIAL COMPLIANCE ISSUE)</span>"
                         rating_color = "#FF003C"
                     else:
-                        rating_badge = "<span style='border:2px solid #FF9900; color:#FF9900; padding:5px 12px; font-weight:bold; font-size:14px; text-transform:uppercase;'>UNDER-YIELD DEFICIENCY</span>"
+                        rating_badge = "<span style='border:2px solid #FF9900; color:#FF9900; padding:5px 12px; font-weight:bold; font-size:14px; text-transform:uppercase;'>UNUSUALLY LOW RENT</span>"
                         rating_color = "#FF9900"
                         
                     with col_math_val:
                         st.markdown(f"""
                         <div class="profile-card" style="border-top: 4px solid {rating_color};">
-                            <h4 style="color:var(--meta-label); font-size:12px; margin:0 0 8px 0; text-transform:uppercase;">Calculated Yield Plausibility</h4>
+                            <h4 style="color:var(--meta-label); font-size:12px; margin:0 0 8px 0; text-transform:uppercase;">Calculated Typical Rent</h4>
                             <h2 style="margin:0 0 15px 0; font-size:24px; color:#FFDF00 !important;">INR {calculated_base_rent:,} / mo</h2>
                             <div style="margin-top:10px;">
-                                <p style="font-size:11px; color:var(--meta-label); margin:0 0 5px 0; text-transform:uppercase;">Fiduciary Conformance Rating:</p>
+                                <p style="font-size:11px; color:var(--meta-label); margin:0 0 5px 0; text-transform:uppercase;">Market Check Rating:</p>
                                 {rating_badge}
                             </div>
                         </div>
@@ -1404,7 +1411,7 @@ if client:
                     with col_math_formula:
                         st.markdown(f"""
                         <div class="profile-card" style="border-top: 4px solid #1E60FF;">
-                            <h4 style="color:var(--meta-label); font-size:12px; margin:0 0 8px 0; text-transform:uppercase;">Plausibility Valuation Formula</h4>
+                            <h4 style="color:var(--meta-label); font-size:12px; margin:0 0 8px 0; text-transform:uppercase;">Typical Rent Formula</h4>
                             <code style="font-family:'Courier New', monospace; font-size:13px; color:#00D2FF; font-weight:bold; display:block; padding:10px; background:#16171d; border:1px solid #2d2d30; margin-bottom:10px;">
                             Rent = Area * Rate * Loc_Mult * Type_Mult * Density_Mult
                             </code>
@@ -1467,15 +1474,15 @@ if client:
                     if not missing.empty and bench_val > 0:
                         merged['Interpolated'] = merged['Gross_Salary'].interpolate(method='linear', limit_direction='both')
                         missing['Expected_Salary'] = merged.loc[missing.index, 'Interpolated']
-                        fig_trend.add_scatter(x=missing['Date_Parsed'], y=missing['Expected_Salary'], mode='markers', marker=dict(color=client_color, size=12, symbol='x'), name='Missing Voucher (Interpolated)')
+                        fig_trend.add_scatter(x=missing['Date_Parsed'], y=missing['Expected_Salary'], mode='markers', marker=dict(color=client_color, size=12, symbol='x'), name='Missing Document (Interpolated)')
                 
                 # Plot Actuals (Always added first/on top)
                 if active_sow != "Executive Yield (Salary)":
-                    fig_trend.add_scatter(x=merged['Date_Parsed'], y=merged['Gross_Salary'], mode='lines+markers', name='Actual Audited Proof', line=dict(color=client_color, width=2.5), connectgaps=False)
+                    fig_trend.add_scatter(x=merged['Date_Parsed'], y=merged['Gross_Salary'], mode='lines+markers', name='Actual Verified Amount', line=dict(color=client_color, width=2.5), connectgaps=False)
                 
                 # Chart styling and rendering
                 fig_trend.update_layout(
-                    title=dict(text="CAPITAL STREAM COMPLIANCE TREND (2019 - 2023)", font=dict(family="Helvetica Neue, sans-serif", size=16, color="var(--text-color)")),
+                    title=dict(text="WEALTH INFLOW TREND OVER TIME (2019 - 2023)", font=dict(family="Helvetica Neue, sans-serif", size=16, color="var(--text-color)")),
                     paper_bgcolor='rgba(0,0,0,0)', 
                     plot_bgcolor='rgba(0,0,0,0)', 
                     font=dict(color="var(--text-color)"), 
@@ -1486,7 +1493,7 @@ if client:
                 st.plotly_chart(fig_trend, width='stretch')
                 
                 # D. Volatility (Percentage MoM Change) — reindexed on full date range
-                st.subheader("YIELD VARIANCE & VOLATILITY PROFILE (MoM % CHANGE)")
+                st.subheader("INCOME VOLATILITY & MONTH-OVER-MONTH CHANGES")
                 # Reindex on complete date range to avoid gapped pct_change
                 volatility_df = client_sow_df.set_index('Date_Parsed')['Gross_Salary'].reindex(ideal_dates).to_frame().reset_index()
                 volatility_df.columns = ['Date_Parsed', 'Gross_Salary']
@@ -1552,32 +1559,32 @@ else:
     st.write("---")
     st.markdown("""
     <div class="profile-card" style="border: 2px solid #FFFFFF; box-shadow: 8px 8px 0px #FFFFFF; padding: 30px;">
-        <p style="margin:0; padding:0; font-size:14px; color:#8a8a8f !important; text-transform:uppercase; font-weight:900;">Fiduciary Compliance Gateway</p>
-        <h1 style="border-bottom:none; font-size:36px; margin:10px 0 20px 0; color:#FFDF00 !important; font-family:'Helvetica Neue', Arial, sans-serif !important;">WEALTH GENESIS DUE DILIGENCE ENGINE</h1>
+        <p style="margin:0; padding:0; font-size:14px; color:#8a8a8f !important; text-transform:uppercase; font-weight:900;">Compliance Check Portal</p>
+        <h1 style="border-bottom:none; font-size:36px; margin:10px 0 20px 0; color:#FFDF00 !important; font-family:'Helvetica Neue', Arial, sans-serif !important;">WEALTH BACKGROUND AUDIT TOOL</h1>
         <p style="font-size:15px; line-height:1.6; max-width:900px; font-family: 'Courier New', monospace;">
-            This secure portal performs Enhanced Customer Due Diligence (ECDD) on Ultra-High-Net-Worth Individuals (UHNWIs) in accordance with Wolfsberg and MAS guidelines. It maps the <b>Origin of Capital Matrix</b>, performs live market plausibility calibrations, and logs deficiency registers.
+            This secure portal performs background checks on wealthy clients. It maps their <b>Source of Wealth Status</b>, performs live comparisons against market rates, and tracks missing documents.
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    st.write("### SYSTEM CORE PROTOCOLS")
+    st.write("### HOW TO USE THE APP")
     step1, step2, step3 = st.columns(3)
     step1.markdown("""
     <div class="profile-card" style="height:100%; border:1px solid #2d2d30;">
-        <h4 style="color:#00FFAA; margin:0 0 10px 0; font-weight:900; font-family:'Helvetica Neue',sans-serif;">01 / SEARCH LEDGER</h4>
-        <p style="font-size:13px; color:#8a8a8f !important; line-height:1.5;">Select a designated Client's Capital Genesis Profile from the autocomplete search bar above to initialize verification.</p>
+        <h4 style="color:#00FFAA; margin:0 0 10px 0; font-weight:900; font-family:'Helvetica Neue',sans-serif;">01 / FIND CLIENT</h4>
+        <p style="font-size:13px; color:#8a8a8f !important; line-height:1.5;">Select a client's name or ID from the search bar above to start checking their details.</p>
     </div>
     """, unsafe_allow_html=True)
     step2.markdown("""
     <div class="profile-card" style="height:100%; border:1px solid #2d2d30;">
-        <h4 style="color:#FFDF00; margin:0 0 10px 0; font-weight:900; font-family:'Helvetica Neue',sans-serif;">02 / AUDIT CHANNELS</h4>
-        <p style="font-size:13px; color:#8a8a8f !important; line-height:1.5;">Track Wealth Generation Streams, open documentary proof compartments, and directly ingest verification vouchers.</p>
+        <h4 style="color:#FFDF00; margin:0 0 10px 0; font-weight:900; font-family:'Helvetica Neue',sans-serif;">02 / CHECK DOCUMENTS</h4>
+        <p style="font-size:13px; color:#8a8a8f !important; line-height:1.5;">See how they made their money, check uploaded proof documents, and upload new ones.</p>
     </div>
     """, unsafe_allow_html=True)
     step3.markdown("""
     <div class="profile-card" style="height:100%; border:1px solid #2d2d30;">
-        <h4 style="color:#FF003C; margin:0 0 10px 0; font-weight:900; font-family:'Helvetica Neue',sans-serif;">03 / PLAUSIBILITY</h4>
-        <p style="font-size:13px; color:#8a8a8f !important; line-height:1.5;">Compare executive yields, rental streams, and equity liquidations against live global market indices to verify wealth plausibility.</p>
+        <h4 style="color:#FF003C; margin:0 0 10px 0; font-weight:900; font-family:'Helvetica Neue',sans-serif;">03 / MARKET RATE CHECK</h4>
+        <p style="font-size:13px; color:#8a8a8f !important; line-height:1.5;">Compare salaries, rent income, and stock sales against real market rates to make sure the numbers make sense.</p>
     </div>
     """, unsafe_allow_html=True)
     
