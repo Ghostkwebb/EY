@@ -751,16 +751,35 @@ class SalaryData(BaseModel):
     Gross_Salary: float = Field(description="Gross salary amount")
 
 @st.cache_data 
-def fetch_real_benchmark_sources(job_title, serp_key, llm_choice, groq_key):
-    """Scrapes Google via SerpAPI, extracts monthly salary for the top 3 organic sources."""
-    fallbacks = [
-        {"val": 75000, "src": "Glassdoor (Fallback)", "snip": "Average national salary on Glassdoor", "link": "https://www.glassdoor.com"},
-        {"val": 95000, "src": "AmbitionBox (Fallback)", "snip": "High-percentile yield on AmbitionBox", "link": "https://www.ambitionbox.com"},
-        {"val": 60000, "src": "LinkedIn (Fallback)", "snip": "Junior-to-mid baseline on LinkedIn", "link": "https://www.linkedin.com"}
-    ]
+def fetch_real_benchmark_sources(sow_type, query_term, serp_key, llm_choice, groq_key, property_area=5000):
+    """Scrapes Google via SerpAPI, extracts monthly values for the top 3 organic sources.
+    Supports 'salary', 'rent', and 'equity' SOW types.
+    """
+    if sow_type == "rent":
+        fallbacks = [
+            {"val": 120000, "src": "99acres (Fallback)", "snip": "Average premium commercial rental yield on 99acres", "link": "https://www.99acres.com"},
+            {"val": 150000, "src": "MagicBricks (Fallback)", "snip": "Typical Prime SEZ commercial rent index", "link": "https://www.magicbricks.com"},
+            {"val": 85000, "src": "Housing.com (Fallback)", "snip": "Premium residential/suburban rental rate", "link": "https://www.housing.com"}
+        ]
+        q_search = f"{query_term} 99acres magicbricks housing"
+    elif sow_type == "equity":
+        fallbacks = [
+            {"val": 180000, "src": "NSE India (Fallback)", "snip": "Typical corporate dividend payout yield", "link": "https://www.nseindia.com"},
+            {"val": 220000, "src": "BSE Sensex (Fallback)", "snip": "Standard capital divestment return rate", "link": "https://www.bseindia.com"},
+            {"val": 150000, "src": "Moneycontrol (Fallback)", "snip": "Average HNW stock liquidation payout", "link": "https://www.moneycontrol.com"}
+        ]
+        q_search = f"{query_term} moneycontrol nse bse"
+    else: # salary
+        fallbacks = [
+            {"val": 75000, "src": "Glassdoor (Fallback)", "snip": "Average national salary on Glassdoor", "link": "https://www.glassdoor.com"},
+            {"val": 95000, "src": "AmbitionBox (Fallback)", "snip": "High-percentile yield on AmbitionBox", "link": "https://www.ambitionbox.com"},
+            {"val": 60000, "src": "LinkedIn (Fallback)", "snip": "Junior-to-mid baseline on LinkedIn", "link": "https://www.linkedin.com"}
+        ]
+        q_search = f"average salary for {query_term} in India Glassdoor AmbitionBox"
+
     if not serp_key: return fallbacks
     
-    params = {"q": f"average salary for {job_title} in India Glassdoor AmbitionBox", "hl": "en", "gl": "in", "api_key": serp_key}
+    params = {"q": q_search, "hl": "en", "gl": "in", "api_key": serp_key}
     try:
         search = GoogleSearch(params)
         results = search.get_dict()
@@ -775,37 +794,77 @@ def fetch_real_benchmark_sources(job_title, serp_key, llm_choice, groq_key):
             snippet = res.get("snippet", "")
             link = res.get("link", "https://www.google.com")
             
-            # FIXED: Dynamic domain extractor (Resolves "https:" bug)
             domain = d_link.split("/")[2] if "://" in d_link else d_link.split("/")[0]
             domain_clean = domain.replace("www.", "")
             
             src_name = "Glassdoor"
             if "ambitionbox" in domain_clean.lower() or "ambitionbox" in title.lower(): src_name = "AmbitionBox"
             elif "linkedin" in domain_clean.lower() or "linkedin" in title.lower(): src_name = "LinkedIn"
+            elif "99acres" in domain_clean.lower() or "99acres" in title.lower(): src_name = "99acres"
+            elif "magicbricks" in domain_clean.lower() or "magicbricks" in title.lower(): src_name = "MagicBricks"
+            elif "housing" in domain_clean.lower() or "housing" in title.lower(): src_name = "Housing.com"
+            elif "moneycontrol" in domain_clean.lower() or "moneycontrol" in title.lower(): src_name = "Moneycontrol"
             else: src_name = domain_clean
             
-            yearly_val = 0
-            lakh_match = re.search(r'(?:₹|Rs\.?)?\s*([\d\.]+)\s*(?:Lakhs?|LPA)', snippet, re.IGNORECASE)
+            extracted_val = 0
             
-            if lakh_match:
-                yearly_val = int(float(lakh_match.group(1)) * 100000)
-            else:
+            if sow_type == "salary":
+                lakh_match = re.search(r'(?:₹|Rs\.?)?\s*([\d\.]+)\s*(?:Lakhs?|LPA)', snippet, re.IGNORECASE)
+                if lakh_match:
+                    extracted_val = int(float(lakh_match.group(1)) * 100000) / 12  # convert LPA to monthly
+                else:
+                    if llm_choice == "Groq (Cloud)": llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=groq_key, temperature=0)
+                    else: llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="local-model", temperature=0)
+                    
+                    prompt = f"Snippet: '{snippet}'. Extract the average YEARLY salary in INR as a single raw integer. If Lakhs/LPA (6 Lakhs), output 600000. Output ONLY the raw integer."
+                    ans = llm.invoke(prompt).content
+                    match = re.search(r'\d+', ans.replace(',', ''))
+                    if match: extracted_val = int(match.group()) / 12
+                
+                if extracted_val > 0:
+                    adjusted_val = int(extracted_val * 1.8) # 1.8x EY Premium
+                else:
+                    adjusted_val = fallbacks[idx % len(fallbacks)]["val"]
+                
+                if adjusted_val < 30000 or adjusted_val > 500000:
+                    adjusted_val = fallbacks[idx % len(fallbacks)]["val"]
+                    
+            elif sow_type == "rent":
                 if llm_choice == "Groq (Cloud)": llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=groq_key, temperature=0)
                 else: llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="local-model", temperature=0)
                 
-                prompt = f"Snippet: '{snippet}'. Extract the average YEARLY salary in INR as a single raw integer. If Lakhs/LPA (6 Lakhs), output 600000. Output ONLY the raw integer."
+                prompt = f"Snippet: '{snippet}'. Extract typical monthly rent in INR. If rent is per sq ft (e.g. Rs 80/sqft), multiply by area {property_area} for monthly total. Return ONLY final total as a single raw integer."
                 ans = llm.invoke(prompt).content
                 match = re.search(r'\d+', ans.replace(',', ''))
-                if match: yearly_val = int(match.group())
-
-            if yearly_val > 0:
-                adjusted_val = int((yearly_val // 12) * 1.8) # 1.8x EY Premium
-            else:
-                adjusted_val = fallbacks[idx % len(fallbacks)]["val"]
+                if match: 
+                    extracted_val = int(match.group())
                 
-            if adjusted_val < 30000 or adjusted_val > 500000:
-                adjusted_val = fallbacks[idx % len(fallbacks)]["val"]
+                if extracted_val > 0:
+                    adjusted_val = int(extracted_val)
+                else:
+                    adjusted_val = fallbacks[idx % len(fallbacks)]["val"]
                 
+                if adjusted_val < 5000 or adjusted_val > 5000000:
+                    adjusted_val = fallbacks[idx % len(fallbacks)]["val"]
+                    
+            else: # equity
+                if llm_choice == "Groq (Cloud)": llm = ChatGroq(model_name="llama-3.1-8b-instant", api_key=groq_key, temperature=0)
+                else: llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key=api_key, model="local-model", temperature=0)
+                
+                prompt = f"Snippet: '{snippet}'. Extract typical corporate dividend payout or equity liquidation yield in INR. If yearly, divide by 12. Return ONLY monthly equivalent as a single raw integer."
+                ans = llm.invoke(prompt).content
+                match = re.search(r'\d+', ans.replace(',', ''))
+                if match: 
+                    extracted_val = int(match.group())
+                
+                if extracted_val > 0:
+                    adjusted_val = int(extracted_val)
+                else:
+                    adjusted_val = fallbacks[idx % len(fallbacks)]["val"]
+                
+                if adjusted_val < 10000 or adjusted_val > 10000000:
+                    adjusted_val = fallbacks[idx % len(fallbacks)]["val"]
+                    
             sources.append({"val": adjusted_val, "src": f"{src_name} (Scraped)", "snip": snippet, "link": link})
             
         while len(sources) < 3:
@@ -1198,7 +1257,7 @@ if client:
                     search_q = f"{client_sow_df['Job_Title'].iloc[0]} average salary"
                     serp_key = os.getenv("SERPAPI_KEY")
                     with st.spinner("Scraping live salary indices..."):
-                        sources = fetch_real_benchmark_sources(search_q, serp_key, llm_choice, api_key)
+                        sources = fetch_real_benchmark_sources("salary", search_q, serp_key, llm_choice, api_key)
                         
                     with st.expander("📄 VIEW VERIFIED MARKET SOURCES", expanded=False):
                         st.write("**Verify Market Reference Source:**")
@@ -1355,10 +1414,10 @@ if client:
                         st.session_state[f"properties_{client['Client_ID']}"] = props
                         
                     # Live Scrape cross-reference expander for Rent SOW
-                    search_q = "average monthly commercial property rent yield"
+                    search_q = f"average monthly rent for {active_prop['Property_Type']} in {active_prop['Location_Tier']} India"
                     serp_key = os.getenv("SERPAPI_KEY")
                     with st.spinner("Scraping live rent indices..."):
-                        sources = fetch_real_benchmark_sources(search_q, serp_key, llm_choice, api_key)
+                        sources = fetch_real_benchmark_sources("rent", search_q, serp_key, llm_choice, api_key, property_area=active_prop["Area"])
                         
                     with st.expander("📄 VIEW VERIFIED SOURCE SNIPPETS & COMPLIANCE LINKS", expanded=False):
                         st.write("**Verify Plausibility Reference Source:**")
@@ -1447,7 +1506,7 @@ if client:
                     serp_key = os.getenv("SERPAPI_KEY")
                     
                     with st.spinner("Scraping global market indices..."):
-                        sources = fetch_real_benchmark_sources(search_q, serp_key, llm_choice, api_key)
+                        sources = fetch_real_benchmark_sources("equity", search_q, serp_key, llm_choice, api_key)
                         
                     with st.expander("📄 VIEW VERIFIED SOURCE SNIPPETS & COMPLIANCE LINKS", expanded=True):
                         st.write("**Verify Plausibility Reference Source:**")
